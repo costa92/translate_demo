@@ -1,6 +1,6 @@
 from typing import Optional
 from llm_core.factory import LLMFactory
-from llm_core.base import LLM
+from llm_core.base import LLMBase
 
 from langchain_ollama import ChatOllama
 
@@ -9,7 +9,7 @@ from llm_core.config import settings_instance
 
 
 @LLMFactory.register("ollama")
-class OllamaLLM(LLM):
+class OllamaLLM(LLMBase):
     """Ollama LLM提供商实现"""
     
     def __init__(self, model: Optional[str] = None, temperature: float = 0, **kwargs):

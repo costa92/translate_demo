@@ -1,6 +1,6 @@
 # Compare this snippet from src/tools/translate/translate_tool.py:
 from .config import system_prompt
-from llm_core import LLM
+from llm_core import LLMBase
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -15,7 +15,7 @@ from langchain_core.prompts import ChatPromptTemplate
 :raises ValueError: 如果模型输出为空
 """
 # 翻译函数
-def translate(llm: LLM, text: str, from_lang: str, to_lang: str):
+def translate(llm: LLMBase, text: str, from_lang: str, to_lang: str):
   # partial is used to bind the variables to the prompt template
   prompt_template = ChatPromptTemplate.from_messages([
     ("system", system_prompt),

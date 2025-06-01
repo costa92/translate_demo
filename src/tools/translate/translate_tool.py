@@ -2,7 +2,7 @@ from typing import Type # For type hinting
 from pydantic import BaseModel,Field
 from langchain_core.tools import BaseTool
 from pydantic import PrivateAttr
-from llm_core import LLM
+from llm_core import LLMBase
 from tools.translate.translate import translate
 
 # 翻译输入模型
@@ -17,9 +17,9 @@ class TranslatorTool(BaseTool):
     description: str = "Translate text from one language to another"
     args_schema: Type[TranslationInput] = TranslationInput
 
-    _llm: LLM = PrivateAttr()
+    _llm: LLMBase = PrivateAttr()
 
-    def __init__(self, llm: LLM, **kwargs):
+    def __init__(self, llm: LLMBase, **kwargs):
         super().__init__(**kwargs)
         self._llm = llm
 

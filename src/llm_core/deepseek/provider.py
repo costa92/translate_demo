@@ -1,12 +1,12 @@
 from typing import Optional, Any
 from llm_core.factory import LLMFactory
-from llm_core.base import LLM
+from llm_core.base import LLMBase
 from langchain_deepseek import ChatDeepSeek
 from llm_core.config import settings_instance
 
 # 请替换为正确的LLM基类导入
 @LLMFactory.register("deepseek")
-class DeepSeekLLM(LLM):
+class DeepSeekLLM(LLMBase):
     """DeepSeek LLM提供商实现"""
     
     def __init__(self, model: Optional[str] = None, temperature: float = 0, **kwargs):
