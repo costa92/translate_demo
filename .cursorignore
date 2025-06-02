@@ -1,0 +1,2 @@
+# Ignore `dist` directory and all files inside
+dist/

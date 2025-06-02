@@ -22,6 +22,7 @@ class DeepSeekLLM(LLMBase):
         self.temperature = temperature
         self.api_key = kwargs.get('api_key') or settings_instance.get('DEEPSEEK_API_KEY')
         self.base_url = kwargs.get('base_url') or settings_instance.get('DEEPSEEK_BASE_URL')
+
         self._llm = ChatDeepSeek(
             model=self.model, 
             temperature=self.temperature, 

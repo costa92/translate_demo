@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## My Project Memory Bank Rules for Cursor
+
+**On new task/chat, ALWAYS:**
+1. Read and understand `memory-bank/projectbrief.md`. This tells you the project's main goal.
+2. Read and understand `memory-bank/activeContext.md`. This updates you on the current focus.
+3. List the key technologies from `memory-bank/techContext.md` to ensure compatibility.
+
+**After implementing a significant feature or making a key decision:**
+1. Ask me: "Should I update `memory-bank/activeContext.md` or `memory-bank/progress.md` with these changes?"
+2. If I confirm, please help me draft the update for the relevant file(s).

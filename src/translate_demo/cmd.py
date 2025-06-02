@@ -46,7 +46,7 @@ def get_llm_deepseek() -> LLMBase:
   from translate_demo.config import settings
   from llm_core.config import settings_instance
   settings_instance.update(settings.as_dict())
-  return LLMFactory.create(provider="deepseek", model="deepseek-r1:14b", temperature=0) 
+  return LLMFactory.create(provider="deepseek", model="deepseek-chat", temperature=0) 
 
 @click.command()
 def run():
@@ -68,7 +68,9 @@ def run():
     print(f"\n▶️ Trying {provider_name}...")
     try:
       llm = provider_func()
-      translation = llm.generate_text(f"'{text_to_translate}' in {target_language}")
+    #   translation = llm.generate_text(f"'{text_to_translate}' in {target_language}")
+      text_to_translate = "I like you, but I don't know you"
+      translation = translate(llm, text=text_to_translate, from_lang="English", to_lang="Chinese")
       print(f"✅ Success! Translation: {translation}")
       break  # Use the first successful provider
     except Exception as e:

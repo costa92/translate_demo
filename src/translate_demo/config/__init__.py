@@ -33,6 +33,8 @@ settings = Dynaconf(
     includes=_external_files,  # Customs settings.
     base_dir=_base_dir,  # `settings.BASE_DIR` 
     
-    OPENAI_API_KEY=os.getenv('SILICONFLOW_API_KEY'),
-    OPENAI_BASE_URL="https://api.siliconflow.cn/v1",
+    # OPENAI_API_KEY=os.getenv('SILICONFLOW_API_KEY'),
+    # OPENAI_BASE_URL="https://api.siliconflow.cn/v1",
+    DEEPSEEK_API_KEY=os.getenv('DEEPSEEK_API_KEY'),
+    DEEPSEEK_BASE_URL="https://api.deepseek.com",
 )

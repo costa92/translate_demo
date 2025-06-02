@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目基础说明
+本项目使用以下技术栈和开发规范，适用于所有开发者及 AI 助手：
+
+- 使用 **Python** 作为主要开发语言。
+- 使用 **LangChain** 作为核心工具库，构建智能体逻辑、链式调用和工具集成。
+- 推荐使用 `poetry` 或 `uv` 管理依赖。
+- 所有模块应符合模块化设计，具备良好的注释与类型标注（typing）。
+- 若涉及多 agent 协作或 tool 调用，请遵循 LangChain 的标准模式，如 `AgentExecutor`、`Tool`、`LLMChain` 等。
+- 测试覆盖应使用 `pytest`，并保证核心逻辑单元覆盖率达标。
