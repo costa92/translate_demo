@@ -9,6 +9,7 @@
 
 - 2025-06-01：项目初始化，完成基础目录、依赖和 LLM 抽象层。
 - 2025-06-02：重构 LLM provider，完善 DeepSeek/Ollama 支持，命令行默认切换为 DeepSeek，完善异常处理和 fallback，初始化 memory-bank 记忆库。
+- 2025-06-03：添加 fastapi、uvicorn 依赖，实现异步翻译 API。
 
 ---
 
@@ -32,6 +33,33 @@
 from tools.translate.translate import translate
 result = translate(llm, text="I like you, but I don't know you", from_lang="English", to_lang="Chinese")
 print(result)
+```
+
+---
+
+## FastAPI 异步翻译接口
+
+- 依赖：`fastapi`、`uvicorn` 已加入 pyproject.toml
+- 启动方式：
+
+  - 推荐：
+    ```sh
+    poetry run uvicorn src.translate_demo.api:app --reload
+    ```
+  - 或用脚本：
+    ```sh
+    poetry run translate_api
+    ```
+- 主要接口：
+  - `POST /api/translate`
+  - 请求参数：`{"text": str, "from_lang": str, "to_lang": str}`
+  - 返回：`{"result": str}`
+- 示例请求：
+
+```sh
+curl -X POST http://127.0.0.1:8000/api/translate \
+  -H "Content-Type: application/json" \
+  -d '{"text": "I like you, but I do not know you", "from_lang": "English", "to_lang": "Chinese"}'
 ```
 
 ---
