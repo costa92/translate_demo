@@ -59,8 +59,8 @@ def run():
   
   # Try different providers
   providers = [
-    ("Ollama (local LLM)", get_llm_ollama),
-    # ("DeepSeek", get_llm_deepseek),
+    # ("Ollama (local LLM)", get_llm_ollama),
+    ("DeepSeek", get_llm_deepseek),
     # ("OpenAI", get_llm_openai),
   ]
   
