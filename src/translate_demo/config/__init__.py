@@ -37,4 +37,6 @@ settings = Dynaconf(
     # OPENAI_BASE_URL="https://api.siliconflow.cn/v1",
     DEEPSEEK_API_KEY=os.getenv('DEEPSEEK_API_KEY'),
     DEEPSEEK_BASE_URL="https://api.deepseek.com",
+    api_host=os.getenv('api_host', '0.0.0.0'),
+    api_port=os.getenv('api_port', 9000),
 )

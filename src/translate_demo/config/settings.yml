@@ -2,3 +2,7 @@ verbose: false
 debug: false
 loglevel: warning
 logpath: /tmp/{{ cookiecutter.project_slug }}
+
+# API 服务配置
+api_host: 0.0.0.0
+api_port: 8080

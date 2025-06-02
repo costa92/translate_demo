@@ -3,6 +3,9 @@ from pydantic import BaseModel
 from tools.translate.translate import translate
 from llm_core import LLMFactory, LLMBase
 import asyncio
+import uvicorn
+from translate_demo.config import settings
+from llm_core.config import settings_instance
 
 app = FastAPI()
 
@@ -12,14 +15,13 @@ class TranslateRequest(BaseModel):
     to_lang: str
 
 def get_llm() -> LLMBase:
-    from translate_demo.config import settings
-    from llm_core.config import settings_instance
     settings_instance.update(settings.as_dict())
     return LLMFactory.create(provider="deepseek", model="deepseek-chat", temperature=0)
 
 @app.post("/api/translate")
 async def api_translate(req: TranslateRequest):
     llm = get_llm()
+    # 获取当前线程的 event loop
     loop = asyncio.get_event_loop()
     try:
         # 假如 translate 是同步的，用 run_in_executor 包装
@@ -29,5 +31,7 @@ async def api_translate(req: TranslateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 def main():
-    import uvicorn
-    uvicorn.run("translate_demo.api:app", host="0.0.0.0", port=8080, reload=True) 
+    host = settings.API_HOST
+    port = settings.API_PORT
+    print(f"[INFO] API will start at http://{host}:{port}")
+    uvicorn.run("translate_demo.api:app", host=host, port=port, reload=True) 
