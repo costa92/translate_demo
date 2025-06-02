@@ -1,4 +1,47 @@
+# 项目开发说明
+
+## 项目简介
+
+本项目是一个基于 Python + LangChain 的多 LLM（如 DeepSeek、Ollama、OpenAI）翻译演示工具。
+支持命令行一键翻译，具备多 provider 适配、异常回退、可扩展的 LLM 工厂和工具链。
+
+## 主要开发节奏
+
+- 2025-06-01：项目初始化，完成基础目录、依赖和 LLM 抽象层。
+- 2025-06-02：重构 LLM provider，完善 DeepSeek/Ollama 支持，命令行默认切换为 DeepSeek，完善异常处理和 fallback，初始化 memory-bank 记忆库。
+
+---
+
 # Begin
+
+## LLM Provider 适配与命令行用法
+
+### Provider 适配
+
+- 所有 LLM provider（如 DeepSeek、Ollama）均需实现 `LLMBase` 抽象类的全部方法（如 generate_text、generate_chat 等）。
+- provider 注册采用工厂模式，便于后续扩展更多 LLM。
+- DeepSeek 默认使用 `deepseek-chat` 模型，Ollama 支持本地模型。
+
+### 命令行用法
+
+- 入口：`poetry run translate`
+- 默认调用 DeepSeek provider，支持自动 fallback。
+- 支持直接调用 `translate` 工具函数，推荐用法如下：
+
+```python
+from tools.translate.translate import translate
+result = translate(llm, text="I like you, but I don't know you", from_lang="English", to_lang="Chinese")
+print(result)
+```
+
+---
+
+## memory-bank 机制
+
+- 项目引入 memory-bank 目录，记录项目简介、技术栈、开发进度、当前上下文等，便于团队协作和知识沉淀。
+- 建议每次重要变更后同步更新 memory-bank。
+
+---
 
 ## Init project environment
 
