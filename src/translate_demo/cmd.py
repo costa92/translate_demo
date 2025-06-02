@@ -30,24 +30,50 @@ def use_agent(llm: LLMBase):
   rs = agent.translate("I like you, but I don't know you", "Chinese")
   print(rs)
 
-def get_llm() -> LLMBase:
+def get_llm_openai() -> LLMBase:
   from translate_demo.config import settings
   from llm_core.config import settings_instance
   settings_instance.update(settings.as_dict())
   return LLMFactory.create(provider="openai", model="deepseek-ai/DeepSeek-R1", temperature=0) 
 
+def get_llm_ollama() -> LLMBase:
+  from translate_demo.config import settings
+  from llm_core.config import settings_instance
+  settings_instance.update(settings.as_dict())
+  return LLMFactory.create(provider="ollama", model="qwen3:8b", temperature=0) 
+
+def get_llm_deepseek() -> LLMBase:
+  from translate_demo.config import settings
+  from llm_core.config import settings_instance
+  settings_instance.update(settings.as_dict())
+  return LLMFactory.create(provider="deepseek", model="deepseek-r1:14b", temperature=0) 
+
 @click.command()
 def run():
   init_log()
-  try:
-    llm = get_llm()
-    rs = llm.generate_text("'I like you, but I don't know you' in Chinese")
-    print(rs)
-  except Exception as e:
-    print(f"Error: {e}")
-    print("Falling back to direct translation without LLM")
+  
+  text_to_translate = "I like you, but I don't know you"
+  target_language = "Chinese"
+  
+  print(f"\n🔄 Translating: '{text_to_translate}' to {target_language}\n")
+  
+  # Try different providers
+  providers = [
+    ("Ollama (local LLM)", get_llm_ollama),
+    # ("DeepSeek", get_llm_deepseek),
+    # ("OpenAI", get_llm_openai),
+  ]
+  
+  for provider_name, provider_func in providers:
+    print(f"\n▶️ Trying {provider_name}...")
+    try:
+      llm = provider_func()
+      translation = llm.generate_text(f"'{text_to_translate}' in {target_language}")
+      print(f"✅ Success! Translation: {translation}")
+      break  # Use the first successful provider
+    except Exception as e:
+      print(f"❌ Error with {provider_name}: {e}")
+  else:
+    # Fallback if all providers fail
+    print("\n⚠️ All providers failed. Using fallback translation:")
     print("Translation: 我喜欢你，但我不认识你")
-#   use_tool(llm)
-#   use_agent(llm)
-  # print(rs)
-#   print(translate(llm, "i like you, but i don't know you", "en", "zh"))
