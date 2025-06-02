@@ -21,7 +21,6 @@ def get_llm() -> LLMBase:
 @app.post("/api/translate")
 async def api_translate(req: TranslateRequest):
     llm = get_llm()
-    # 获取当前线程的 event loop
     loop = asyncio.get_event_loop()
     try:
         # 假如 translate 是同步的，用 run_in_executor 包装

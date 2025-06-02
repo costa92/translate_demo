@@ -21,6 +21,12 @@
    - pytest：测试框架
    - pre-commit：代码质量检查
 
+## 服务运行参数配置
+
+- 所有服务运行参数（如 API host/port）统一由 Dynaconf settings 管理。
+- 配置优先级为：环境变量 > settings.yml > 默认值。
+- 推荐通过 settings.yml 或环境变量调整服务端口和 host。
+
 ## 项目结构
 
 ```

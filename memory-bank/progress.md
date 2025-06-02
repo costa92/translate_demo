@@ -11,6 +11,10 @@
 - 为 DeepSeek 和 Ollama provider 添加完整功能实现（feat(llm_core): 为DeepSeek和Ollama提供者添加完整功能实现）。
 - 切换默认翻译服务提供商为 DeepSeek（refactor(cmd): 切换默认翻译服务提供商为DeepSeek）。
 
+## 2025-06-xx
+
+- 优化 FastAPI 启动配置，去除重复逻辑，提升部署灵活性。
+
 ## 2025-06-01
 
 - 修复 LLMBase 抽象方法未实现导致的 provider 报错，完善 OllamaLLM、DeepSeekLLM 实现。
