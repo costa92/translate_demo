@@ -123,3 +123,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 参考文档
 
 [LLM：Agent](https://www.drinkingfishingseeking.com/2025/02/20/llm-agent/)
+[DeepSeek 模型微调](https://zhuanlan.zhihu.com/p/17628689019)
