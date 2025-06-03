@@ -47,6 +47,14 @@
   - **开发计划**：将记忆功能的实现分解到项目的各个阶段，并更新了风险评估。
 - **更新活动上下文**：`memory-bank/activeContext.md` 已相应更新，以反映设计文档的这些重要增强，并调整了第一阶段的任务重点和挑战。
 
+## 2025-06-06 (高级推理策略设计)
+
+- **丰富智能体推理能力**：对 `docs/knowledge_base_multi_agent_design.md` 进行了重要更新，系统性地引入了高级推理策略。
+  - **单路径推理**：规划了 CoT (思维链) 和 ReWOO/HuggingGPT (LLM 调用外部工具/模型) 模式在智能体（特别是 OrchestratorAgent 和 KnowledgeRetrievalAgent）任务执行和决策中的应用。
+  - **多路径推理**：规划了 CoT-SC (思维链自洽) 和 ToT (思维树)/RAP (规划推理) 等策略，用于增强 OrchestratorAgent 的复杂任务规划能力和 KnowledgeRetrievalAgent 的复杂查询处理能力，包括对状态评估、剪枝和搜索算法的初步考量。
+  - **推理与记忆协同**：探讨了高级推理如何辅助记忆反思，以及记忆如何指导推理路径选择。
+- **更新活动上下文**：`memory-bank/activeContext.md` 已相应更新，以反映设计文档中新增的高级推理策略规划，并调整了当前工作重点、最近完成工作、挑战及下一步计划。
+
 ## 里程碑
 
 ### 2025 年第三季度
@@ -80,11 +88,11 @@
 项目的核心开发方向已转向构建知识库多智能体系统。详细的阶段性计划、任务和交付成果请参考 `docs/development_plan.md`。主要阶段包括：
 
 1.  **第一阶段：基础架构与核心框架 (预计 3-4 周)**
-    - 目标：搭建系统运行的基础环境，定义核心通信机制和数据模型，完成 OrchestratorAgent 的初步实现，**并为后续高级记忆模块的集成打下坚实基础**。
+    - 目标：搭建系统运行的基础环境，定义核心通信机制和数据模型，完成 OrchestratorAgent 的初步实现，**并为后续高级记忆模块和高级推理策略的集成打下坚实基础**。
 2.  **第二阶段：核心智能体功能实现 (预计 5-6 周)**
-    - 目标：完成 DataCollectionAgent, KnowledgeProcessingAgent, KnowledgeStorageAgent, 和 KnowledgeRetrievalAgent 的核心功能开发与单元测试，**实现基础的记忆读取和写入机制**。
+    - 目标：完成 DataCollectionAgent, KnowledgeProcessingAgent, KnowledgeStorageAgent, 和 KnowledgeRetrievalAgent 的核心功能开发与单元测试，实现基础的记忆读取和写入机制，**并初步探索简单推理链（如 CoT）的应用**。
 3.  **第三阶段：高级功能、集成与测试 (预计 4-5 周)**
-    - 目标：实现 KnowledgeMaintenanceAgent，集成 LLM 服务，优化工作流程，**完善和深化记忆功能，特别是实现高级写入策略和初步的记忆反思机制**，并进行系统集成测试。
+    - 目标：实现 KnowledgeMaintenanceAgent，集成 LLM 服务，优化工作流程，完善和深化记忆功能（高级写入策略、初步反思），**并开始集成和测试更高级的推理策略（如 ReWOO, CoT-SC, 初步的 ToT 框架）**，进行系统集成测试。
 4.  **第四阶段：部署准备、文档与验收 (预计 1-2 周)**
     - 目标：完成系统部署准备，完善所有文档，进行用户验收测试 (UAT)。
 
