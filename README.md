@@ -119,3 +119,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 参考文档
+
+[LLM：Agent](https://www.drinkingfishingseeking.com/2025/02/20/llm-agent/)
