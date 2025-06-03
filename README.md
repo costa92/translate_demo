@@ -11,6 +11,7 @@ A Python package for handling different LLM providers with a unified interface.
 - Type hints for better IDE support
 
 ## Project Structure
+
 ```
 ├── .editorconfig
 ├── .github/
@@ -40,6 +41,10 @@ A Python package for handling different LLM providers with a unified interface.
 ## Installation
 
 ```bash
+pip install poetry
+```
+
+```bash
 pip install llm-core
 ```
 
@@ -50,6 +55,7 @@ poetry add llm-core
 ```
 
 ## Dependency Management
+
 The project uses `poetry` for dependency management. Here are some useful commands:
 
 - Install dependencies: `poetry install`
@@ -99,8 +105,12 @@ llm = LLMFactory.create(
 )
 ```
 
-## Development Guide
-For detailed development instructions, please refer to <mcfile name="development.md" path="/Users/costalong/code/ai/translate-demo/translate_demo/docs/development.md"></mcfile>.
+## 开发指南
+
+### 环境配置
+
+1. 安装依赖:
+   For detailed development instructions, please refer to <mcfile name="development.md" path=docs/development.md"></mcfile>.
 
 ## Contributing
 
