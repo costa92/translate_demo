@@ -60,8 +60,8 @@ async def async_run():
   # Try different providers
   providers = [
     # ("Ollama (local LLM)", get_llm_ollama),
-    ("DeepSeek", get_llm_deepseek),
-    # ("OpenAI", get_llm_openai),
+    # ("DeepSeek", get_llm_deepseek),
+    ("OpenAI", get_llm_openai),
   ]
 
   translation = None
@@ -85,7 +85,7 @@ async def async_run():
     print("\n🔊 Converting translation to speech...")
     try:
       tts_tool = TextToSpeechTool()
-      audio_path = tts_tool._run(text=translation, language="zh")
+      audio_path = tts_tool._run(text=translation, language="zh", output_path="output.mp3")
       print(f"✅ Audio file generated at: {audio_path}")
     except Exception as e:
       print(f"❌ Text-to-speech conversion failed: {e}")
