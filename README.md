@@ -105,12 +105,12 @@ llm = LLMFactory.create(
 )
 ```
 
-## 开发指南
+## Development Guide
 
-### 环境配置
+### Environment Setup
 
-1. 安装依赖:
-   For detailed development instructions, please refer to <mcfile name="development.md" path=docs/development.md"></mcfile>.
+1. Install Dependencies:
+   For detailed development instructions, please refer to [development](docs/development.md)
 
 ## Contributing
 
