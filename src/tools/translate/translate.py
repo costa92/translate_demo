@@ -30,3 +30,15 @@ def translate(llm: LLMBase, text: str, from_lang: str, to_lang: str):
     raise ValueError(f"Output is empty: {rs}")
   return rs.replace(" ", "").replace("\n", "")
 
+
+# 异步翻译函数
+async def translate_async(llm: LLMBase, text: str, from_lang: str, to_lang: str):
+  prompt_template = ChatPromptTemplate.from_messages([
+    ("system", system_prompt),
+    ("user", "{text}")
+  ]).partial(from_lang=from_lang, to_lang=to_lang)
+  llm_chain = prompt_template | llm.llm | StrOutputParser()
+  rs = await llm_chain.ainvoke({"text": text})
+  if rs == "":
+    raise ValueError(f"Output is empty: {rs}")
+  return rs.replace(" ", "").replace("\n", "")

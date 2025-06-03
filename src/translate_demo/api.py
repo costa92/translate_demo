@@ -21,6 +21,7 @@ def get_llm() -> LLMBase:
 @app.post("/api/translate")
 async def api_translate(req: TranslateRequest):
     llm = get_llm()
+    # 获取当前事件循环 asyncio
     loop = asyncio.get_event_loop()
     try:
         # 假如 translate 是同步的，用 run_in_executor 包装
@@ -33,4 +34,4 @@ def main():
     host = settings.API_HOST
     port = settings.API_PORT
     print(f"[INFO] API will start at http://{host}:{port}")
-    uvicorn.run("translate_demo.api:app", host=host, port=port, reload=True) 
+    uvicorn.run("translate_demo.api:app", host=host, port=port, reload=True)
