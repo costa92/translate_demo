@@ -65,7 +65,7 @@ def run_google_drive_demo():
             return
         print("Store operation successful.")
 
-        # --- 5. Retrieve the Data ---
+        # --- 5. Retrieve the Latest Chunk ---
         print("\nAttempting to retrieve the latest chunk from Google Drive...")
         # Note: The basic provider retrieves the most recent file, it does not perform vector search.
         retrieved_chunks = storage_agent.retrieve(query_vector=[], top_k=1, filters={})
@@ -73,6 +73,24 @@ def run_google_drive_demo():
         if retrieved_chunks:
             print(f"  -> Retrieved chunk ID: {retrieved_chunks[0].id}")
             print(f"  -> Content: '{retrieved_chunks[0].text_content}'")
+
+        # --- 6. List All Chunk IDs ---
+        print("\nAttempting to list all chunk IDs in the folder...")
+        all_ids = storage_agent.get_all_chunk_ids()
+        print(f"Found {len(all_ids)} total chunks in Google Drive:")
+        for chunk_id in all_ids:
+            print(f"  -> {chunk_id}")
+
+        # --- 7. Retrieve All Content ---
+        print("\nAttempting to retrieve all chunks from Google Drive...")
+        # We set top_k to a high number to get all items.
+        all_chunks = storage_agent.retrieve(query_vector=[], top_k=999, filters={})
+        print(f"Retrieved all {len(all_chunks)} chunk(s).")
+        for i, chunk in enumerate(all_chunks):
+            print(f"  - Chunk {i+1}:")
+            print(f"    ID: {chunk.id}")
+            print(f"    Content: '{chunk.text_content}'")
+            print(f"    Metadata: {chunk.metadata}")
 
     except Exception as e:
         print(f"\nAn unexpected error occurred: {e}")
