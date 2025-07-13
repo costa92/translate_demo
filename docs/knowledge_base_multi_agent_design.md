@@ -24,8 +24,8 @@
 
 ### 2.4 知识存储智能体 (KnowledgeStorageAgent)
 
-- **职责**：管理知识的存储和索引，包括向量数据库、图数据库和缓存。确保数据的一致性和完整性。负责记忆的持久化存储，并根据 OrchestratorAgent 的指令执行记忆写入策略（例如，合并相似记忆，根据 FIFO 或其他策略处理记忆溢出）。
-- **对应原设计**：2.2 知识组织中的数据库存储和版本历史维护，storage/ 目录下的存储相关组件。
+- **职责**：作为知识存储策略的上下文（Context）。它不直接实现存储逻辑，而是根据配置，将所有存储和检索任务（`store`, `retrieve`）**委托**给一个具体的**存储提供者（Storage Provider）**。这种设计模式（策略模式）使得系统可以轻松地接入多种存储后端（如本地内存、OSS、Notion 等），而无需修改核心 Agent 逻辑。
+- **对应原设计**：解耦了原有的存储实现，将其抽象为可插拔的提供者。
 
 ### 2.5 知识检索智能体 (KnowledgeRetrievalAgent)
 
@@ -45,10 +45,13 @@
 graph TD
     User[用户/外部系统] -->|请求/事件| O[OrchestratorAgent]
 
-    subgraph "知识库核心存储"
-        VDB[(Vector Database)]
-        GDB[(Graph Database)]
-        Cache[(Cache)]
+    subgraph "可插拔的存储后端 (Providers)"
+        direction LR
+        P_MEM[内存]
+        P_OSS[OSS]
+        P_NOTION[Notion]
+        P_GDRIVE[Google Drive]
+        P_ONEDRIVE[OneDrive]
     end
 
     O -->|指令| DCA[DataCollectionAgent]
@@ -56,9 +59,11 @@ graph TD
     O -->|待处理数据| KPA[KnowledgeProcessingAgent]
     KPA -->|处理后知识| O
     O -->|存储知识| KSA[KnowledgeStorageAgent]
-    KSA <--> VDB
-    KSA <--> GDB
-    KSA <--> Cache
+    KSA -->|委托| P_MEM
+    KSA -->|委托| P_OSS
+    KSA -->|委托| P_NOTION
+    KSA -->|委托| P_GDRIVE
+    KSA -->|委托| P_ONEDRIVE
 
     O -->|查询请求| KRA[KnowledgeRetrievalAgent]
     KRA -->|查询数据| KSA
@@ -178,17 +183,22 @@ def process(documents: List[RawDocument]) -> List[ProcessedKnowledgeChunk]
 ### 5.4 KnowledgeStorageAgent 接口
 
 ```python
+# 初始化时选择一个提供者
+def __init__(self, provider_type: str, provider_config: dict)
+
+# 所有操作都委托给内部提供者
 def store(chunks: List[ProcessedKnowledgeChunk]) -> bool
 def retrieve(query_vector: List[float], top_k: int, filters: dict) -> List[RetrievedChunk]
-def graph_query(cypher_query: str) -> List[dict]
+def get_all_chunk_ids() -> List[str]
+```
 
-# RetrievedChunk 数据结构
-{
-    "id": str,
-    "text_content": str,
-    "score": float,
-    "metadata": dict
-}
+#### 5.4.1 BaseStorageProvider 接口 (所有提供者都必须实现)
+
+```python
+def __init__(self, config: dict)
+def store(chunks: List[ProcessedKnowledgeChunk]) -> bool
+def retrieve(query_vector: List[float], top_k: int, filters: dict) -> List[RetrievedChunk]
+def get_all_chunk_ids() -> List[str]
 ```
 
 ### 5.5 KnowledgeRetrievalAgent 接口

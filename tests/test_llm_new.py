@@ -1,9 +1,13 @@
 import pytest
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from unittest.mock import patch, MagicMock
-from translate_demo.llm import LLMFactory, LLM
-from translate_demo.llm.openai import OpenAILLM
-from translate_demo.llm.ollama import OllamaLLM
-from translate_demo.llm.deepseek import DeepSeekLLM
+from llm_core.factory import LLMFactory
+from llm_core.base import LLMBase as LLM
+from llm_core.openai.provider import OpenAILLM
+from llm_core.ollama.provider import OllamaLLM
+from llm_core.deepseek.provider import DeepSeekLLM
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 from langchain_deepseek import ChatDeepSeek
@@ -11,24 +15,18 @@ from langchain_deepseek import ChatDeepSeek
 
 @pytest.fixture
 def mock_settings():
-    with patch('translate_demo.llm.openai.provider.settings') as mock_settings_openai, \
-         patch('translate_demo.llm.ollama.provider.settings') as mock_settings_ollama, \
-         patch('translate_demo.llm.deepseek.provider.settings') as mock_settings_deepseek:
-        
-        # 为所有模块设置相同的mock行为
-        for mock_settings in [mock_settings_openai, mock_settings_ollama, mock_settings_deepseek]:
-            mock_settings.get.side_effect = lambda key, default=None: {
-                'OPENAI_MODEL': 'gpt-4',
-                'OPENAI_API_KEY': 'test-key',
-                'OPENAI_BASE_URL': 'https://api.openai.com/v1',
-                'OLLAMA_MODEL': 'llama2',
-                'OLLAMA_BASE_URL': 'http://localhost:11434',
-                'DEEPSEEK_MODEL': 'deepseek-test',
-                'DEEPSEEK_API_KEY': 'test-key',
-                'DEEPSEEK_BASE_URL': 'https://api.deepseek.com'
-            }.get(key, default)
-        
-        yield mock_settings_openai
+    with patch('llm_core.config.settings_instance') as mock_settings:
+        mock_settings.get.side_effect = lambda key, default=None: {
+            'OPENAI_MODEL': 'gpt-4',
+            'OPENAI_API_KEY': 'test-key',
+            'OPENAI_BASE_URL': 'https://api.openai.com/v1',
+            'OLLAMA_MODEL': 'llama2',
+            'OLLAMA_BASE_URL': 'http://localhost:11434',
+            'DEEPSEEK_MODEL': 'deepseek-test',
+            'DEEPSEEK_API_KEY': 'test-key',
+            'DEEPSEEK_BASE_URL': 'https://api.deepseek.com'
+        }.get(key, default)
+        yield mock_settings
 
 
 def test_openai_llm(mock_settings):

@@ -43,13 +43,17 @@ print(result)
 - 启动方式：
 
   - 推荐：
+
     ```sh
     poetry run uvicorn src.translate_demo.api:app --reload
     ```
+
   - 或用脚本：
+
     ```sh
     poetry run translate_api
     ```
+
 - 主要接口：
   - `POST /api/translate`
   - 请求参数：`{"text": str, "from_lang": str, "to_lang": str}`
@@ -142,6 +146,63 @@ In the upper right corner of Pycharm window, then delete configuration.
 ### Others
 
 You should confirm `src` directory in `sys.path`. You can add it by `sys.path.extend(['/tmp/demo/src'])` if it not exist.
+
+## 如何添加新的知识库存储提供者
+
+`KnowledgeStorageAgent` 采用了策略设计模式，可以轻松扩展以支持新的存储后端。要添加一个新的提供者（例如 `Dropbox`），请遵循以下步骤：
+
+1. **创建提供者类**:
+    - 在 `src/agents/knowledge_base/storage_providers/` 目录下，创建一个新的 Python 文件，例如 `dropbox.py`。
+    - 在该文件中，创建一个继承自 `BaseStorageProvider` 的新类，例如 `DropboxStorageProvider`。
+
+    ```python
+    # src/agents/knowledge_base/storage_providers/dropbox.py
+    from .base import BaseStorageProvider, RetrievedChunk
+    from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+
+    class DropboxStorageProvider(BaseStorageProvider):
+        def __init__(self, config):
+            super().__init__(config)
+            # 初始化 Dropbox 客户端...
+
+        def store(self, chunks):
+            # 实现将知识块上传到 Dropbox 的逻辑...
+            pass
+
+        def retrieve(self, query_vector, top_k, filters):
+            # 实现从 Dropbox 检索知识的逻辑...
+            pass
+
+        def get_all_chunk_ids(self):
+            # 实现获取所有知识块 ID 的逻辑...
+            pass
+    ```
+
+2. **注册新的提供者**:
+    - 打开 `src/agents/knowledge_base/knowledge_storage_agent.py`。
+    - 在 `_create_provider` 方法的 `provider_map` 字典中，添加新的提供者。
+
+    ```python
+    # src/agents/knowledge_base/knowledge_storage_agent.py
+    from .storage_providers.dropbox import DropboxStorageProvider # 1. 导入新类
+
+    class KnowledgeStorageAgent:
+        def _create_provider(self, provider_type, config):
+            provider_map = {
+                "memory": MemoryStorageProvider,
+                "notion": NotionStorageProvider,
+                "oss": OSSStorageProvider,
+                "google_drive": GoogleDriveStorageProvider,
+                "onedrive": OneDriveStorageProvider,
+                "dropbox": DropboxStorageProvider, # 2. 在此处添加
+            }
+            # ...
+    ```
+
+3. **（可选）更新配置文档**:
+    - 编辑 `docs/configuration.md`，在“支持的提供者”表格中添加关于 `dropbox` 的新行，说明其用途和必要的配置项。
+
+完成以上步骤后，用户就可以在初始化 `KnowledgeStorageAgent` 时选择 `provider_type='dropbox'` 来使用你新添加的存储后端了。
 
 ## 参考
 
