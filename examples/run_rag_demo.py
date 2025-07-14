@@ -18,7 +18,7 @@ def run_rag_demo():
     data_collection_agent = DataCollectionAgent()
     knowledge_processing_agent = KnowledgeProcessingAgent()
     storage_agent = KnowledgeStorageAgent(provider_type='memory')
-    retrieval_agent = KnowledgeRetrievalAgent()
+    retrieval_agent = KnowledgeRetrievalAgent(storage_agent)
     rag_agent = RAGAgent(llm_provider='ollama', model='llama3:latest')
 
     # --- 2. Data Collection ---
