@@ -9,7 +9,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 from .base import BaseStorageProvider, RetrievedChunk
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 

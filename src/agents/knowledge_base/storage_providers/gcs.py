@@ -6,7 +6,7 @@ from google.cloud import storage
 from google.api_core import exceptions
 
 from .base import BaseStorageProvider, RetrievedChunk
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 class GCSStorageProvider(BaseStorageProvider):
     """

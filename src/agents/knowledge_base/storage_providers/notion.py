@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 from .base import BaseStorageProvider, RetrievedChunk
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 class NotionStorageProvider(BaseStorageProvider):
     """

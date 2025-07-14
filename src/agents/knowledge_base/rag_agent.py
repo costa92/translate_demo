@@ -1,4 +1,4 @@
-from src.llm_core.client import LLMClient
+from llm_core.client import LLMClient
 
 class RAGAgent:
     """

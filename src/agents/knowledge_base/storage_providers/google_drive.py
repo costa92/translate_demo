@@ -11,7 +11,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
 
 from .base import BaseStorageProvider, RetrievedChunk
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]

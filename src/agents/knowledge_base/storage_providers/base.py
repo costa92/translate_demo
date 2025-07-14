@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 class RetrievedChunk:
     def __init__(self, id: str, text_content: str, score: float, metadata: Dict):

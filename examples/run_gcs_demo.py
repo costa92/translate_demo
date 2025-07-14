@@ -10,14 +10,10 @@ Before running this script, you MUST:
 2.  Update the `bucket_name` in the configuration below.
 
 
-import sys
-import os
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 def run_gcs_adc_demo():
     """Initializes the agent and runs a simple store/retrieve workflow with GCS using ADC."""

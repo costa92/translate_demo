@@ -9,14 +9,10 @@ This script shows:
 """
 
 
-import sys
-import os
 
-# Add the project root to the Python path to allow imports from src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 def run_demo_for_provider(storage_agent: KnowledgeStorageAgent):
     """Runs a simple store and retrieve demo for a given storage agent instance."""

@@ -12,14 +12,10 @@ Before running this script, you MUST:
 The first time you run this, a browser window will open for you to authorize the application.
 """
 
-import sys
-import os
 
-# Add the project root to the Python path to allow imports from src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 def run_google_drive_demo():
     """Initializes the agent and runs a simple store/retrieve workflow."""

@@ -1,16 +1,12 @@
 
 
-import sys
-import os
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.agents.knowledge_base.data_collection_agent import DataCollectionAgent
-from src.agents.knowledge_base.knowledge_processing_agent import KnowledgeProcessingAgent
-from src.agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
-from src.agents.knowledge_base.knowledge_retrieval_agent import KnowledgeRetrievalAgent
-from src.agents.knowledge_base.rag_agent import RAGAgent
+from agents.knowledge_base.data_collection_agent import DataCollectionAgent
+from agents.knowledge_base.knowledge_processing_agent import KnowledgeProcessingAgent
+from agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
+from agents.knowledge_base.knowledge_retrieval_agent import KnowledgeRetrievalAgent
+from agents.knowledge_base.rag_agent import RAGAgent
 
 def run_rag_demo():
     """Demonstrates the full RAG pipeline."""

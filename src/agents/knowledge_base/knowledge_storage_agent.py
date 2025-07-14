@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from src.agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 from .storage_providers.base import BaseStorageProvider, RetrievedChunk
 from .storage_providers.memory import MemoryStorageProvider
 from .storage_providers.notion import NotionStorageProvider
