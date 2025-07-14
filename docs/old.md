@@ -39,94 +39,50 @@
 
 ## 3. 系统架构
 
-### 3.1 分层架构
-
-系统采用分层架构，自上而下分为表现层、编排与控制层、执行层以及数据与知识层。这种设计模式确保了各层职责分明、高度解耦，从而提升了系统的可扩展性、可维护性和灵活性。
-
-### 3.2 架构图
+### 3.1 系统架构图
 
 ```mermaid
 graph TD
-    A[用户]
+    User[用户/外部系统] -->|请求/事件| O[OrchestratorAgent]
 
-    subgraph "表现层 (Presentation Layer)"
-        B[Web/Chat Interface: React/Vue, WebSocket]
+    subgraph "可插拔的存储后端 (Providers)"
+        direction LR
+        P_MEM[内存]
+        P_OSS[OSS]
+        P_NOTION[Notion]
+        P_GDRIVE[Google Drive]
+        P_ONEDRIVE[OneDrive]
     end
 
-    subgraph "编排与控制层 (Orchestration Layer)"
-        C1["用户接口智能体 (UI Agent)"]
-        C2["主控/编排智能体 (Orchestrator)"]
-        C1 <--> C2
-    end
+    O -->|指令| DCA[DataCollectionAgent]
+    DCA -->|原始数据| O
+    O -->|待处理数据| KPA[KnowledgeProcessingAgent]
+    KPA -->|处理后知识| O
+    O -->|存储知识| KSA[KnowledgeStorageAgent]
+    KSA -->|委托| P_MEM
+    KSA -->|委托| P_OSS
+    KSA -->|委托| P_NOTION
+    KSA -->|委托| P_GDRIVE
+    KSA -->|委托| P_ONEDRIVE
 
-    subgraph "执行层 (Execution Layer)"
-        D1["查询分析智能体 (Query Parser)"] --> D2["任务分解智能体 (Task Decomposer)"] --> D3["信息检索体 (Retrieval Agents)"] --> D4["答案生成智能体 (Answer Generator)"]
-    end
+    O -->|查询请求| KRA[KnowledgeRetrievalAgent]
+    KRA -->|查询数据| KSA
+    KSA -->|检索结果| KRA
+    KRA -->|响应| O
+    O -->|结果| User
 
-    subgraph "数据与知识层 (Data Layer)"
-        E1[(Vector DB)]
-        E2[(SQL DB)]
-        E3[(Graph DB)]
-        E4[(Internal APIs)]
-    end
+    O -->|维护指令/变更事件| KMA[KnowledgeMaintenanceAgent]
+    KMA -->|读取/验证| KSA
+    KMA -->|更新指令| O
+    KMA -->|验证结果| O
 
-    A -- Request --> B
-    B -- Response --> A
+    DCA -.-> Source1[项目文档]
+    DCA -.-> Source2[代码库]
+    DCA -.-> Source3[Git仓库]
+    DCA -.-> Source4[外部资料]
 
-    B -- User Query --> C1
-    C2 -- Formatted Answer --> B
-
-    C1 -- Feedback --> D1
-    C2 -- Sub-tasks --> D2
-    D4 -- Synthesized Info --> C2
-
-    D3 -- Data --> E1
-    D3 -- Data --> E2
-    D3 -- Data --> E3
-    D3 -- Data --> E4
+    KPA -.-> LLM[LLM服务集成]
 ```
-
-### 3.3 分层说明
-
-#### 3.3.1 表现层 (Presentation Layer)
-- **职责**: 作为系统的用户交互界面，负责接收用户的查询请求并以友好的格式展示最终答案。
-- **组件**:
-  - **Web/Chat Interface**: 基于 React/Vue 和 WebSocket 等前端技术构建，为用户提供实时、动态的交互体验。
-
-#### 3.3.2 编排与控制层 (Orchestration Layer)
-- **职责**: 系统的“大脑”，负责核心的协调与控制。它管理用户会话，解析用户意图，并将任务分派给执行层，最终将格式化的答案返回给表现层。
-- **组件**:
-  - **用户接口智能体 (UI Agent)**: 直接与表现层对接，管理用户交互逻辑，并将用户输入转化为内部指令。
-  - **主控/编排智能体 (Orchestrator)**: 系统的总指挥，负责任务的整体规划、智能体之间的协作以及最终结果的合成。它对应于本文档中定义的 `OrchestratorAgent`。
-
-#### 3.3.3 执行层 (Execution Layer)
-- **职责**: 负责执行具体的子任务。它将来自编排层的复杂任务分解、执行，并从数据层获取所需信息。
-- **组件**:
-  - **查询分析智能体 (Query Parser)**: 对用户查询进行深入分析，提取关键意图和实体。
-  - **任务分解智能体 (Task Decomposer)**: 将复杂的查询分解为一系列可执行的、更小的子任务。
-  - **信息检索体 (Retrieval Agents)**: 根据子任务，从数据与知识层的不同数据源中检索信息。这对应于 `KnowledgeRetrievalAgent` 的核心功能。
-  - **答案生成智能体 (Answer Generator)**: 综合检索到的信息，生成连贯、准确的答案，并将合成后的信息（Synthesized Info）返回给编排层。
-
-#### 3.3.4 数据与知识层 (Data Layer)
-- **职责**: 为系统提供所有必需的数据和知识。
-- **组件**:
-  - **向量数据 (Vector DB)**: 存储文本、图像等内容的向量表示，用于高效的语义相似度搜索。
-  - **关系型数据 (SQL DB)**: 存储结构化数据。
-  - **知识图谱数据库 (Graph DB)**: 存储实体及其相互关系，用于复杂的关联查询和推理。
-  - **内部 API 服务 (Internal APIs)**: 提供对组织内部其他系统或服务的访问接口。
-
-### 3.4 智能体与分层架构的映射
-
-新的分层架构与第 2 节中定义的智能体角色可以进行如下映射：
-
-- **表现层 (Presentation Layer)**: 这是系统的用户界面，它与 `编排与控制层` 的 `用户接口智能体 (UI Agent)` 进行交互。
-- **编排与控制层 (Orchestration Layer)**: 核心是 `OrchestratorAgent`，它扮演着 `主控/编排智能体 (Orchestrator)` 的角色。
-- **执行层 (Execution Layer)**:
-  - `KnowledgeRetrievalAgent` 的功能主要体现在 `信息检索体 (Retrieval Agents)` 中，同时也可能涉及 `查询分析智能体` 的部分职责。
-  - `答案生成智能体` 通常会利用 LLM 服务，这一步由 `OrchestratorAgent` 在接收到检索结果后触发，如第 2.1 节所述。
-- **数据与知识层 (Data Layer)**:
-  - `DataCollectionAgent`, `KnowledgeProcessingAgent`, 和 `KnowledgeStorageAgent` 是构建和维护此层的关键智能体。它们负责从外部源获取数据，处理并存入各种数据库中。
-  - `KnowledgeMaintenanceAgent` 负责监控和更新此层的数据，确保其时效性和准确性。
 
 ## 4. 工作流程
 
@@ -267,116 +223,9 @@ def validate_knowledge(knowledge_id: str) -> ValidationResult
 def resolve_conflict(conflict_info: dict) -> Resolution
 ```
 
-## 6. REST API 定义 (FastAPI)
+## 6. 未来展望
 
-为了将多智能体系统的能力暴露给外部客户端（如 Web 应用、移动端、桌面软件或其他微服务），我们将设计并实现一个 RESTful API。该 API 将使用 FastAPI 框架构建，利用其高性能、异步支持以及与 Pydantic 模型的无缝集成，可以自动生成交互式的 API 文档。
-
-### 6.1 API 架构
-
-API 层作为系统的统一入口，位于客户端和 `OrchestratorAgent` 之间。所有外部请求都由 API 服务器接收，经过验证和解析后，再调用 `OrchestratorAgent` 的相应功能来处理。
-
-```mermaid
-graph TD
-    subgraph "外部客户端"
-        Client_Web[Web 应用]
-        Client_Mobile[移动应用]
-        Client_Service[其他微服务]
-    end
-
-    subgraph "API 网关 (FastAPI)"
-        direction LR
-        API[REST API Endpoints]
-        Validation[Pydantic 数据模型验证]
-    end
-
-    Client_Web --> API
-    Client_Mobile --> API
-    Client_Service --> API
-
-    API --> Validation
-    Validation --> O[OrchestratorAgent]
-```
-
-### 6.2 数据模型 (Pydantic)
-
-我们将使用 Pydantic 来定义所有 API 请求和响应的数据结构，确保类型安全和数据验证。
-
-```python
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Literal, Optional
-from uuid import UUID, uuid4
-
-# --- 通用模型 ---
-class Task(BaseModel):
-    task_id: UUID = Field(default_factory=uuid4)
-    status: Literal["pending", "running", "success", "failed"] = "pending"
-    details: Optional[str] = None
-
-# --- 知识库管理 ---
-class KnowledgeSource(BaseModel):
-    type: Literal["url", "file_path", "text"]
-    location: str # URL, 本地文件路径或纯文本内容
-
-class AddKnowledgeRequest(BaseModel):
-    sources: List[KnowledgeSource]
-    # 可选参数，用于指定处理方式等
-    processing_options: Optional[Dict[str, Any]] = None
-
-# --- 问答与聊天 ---
-class ChatMessage(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str
-
-class QueryRequest(BaseModel):
-    query: str
-    session_id: Optional[str] = None # 用于保持对话历史
-    history: List[ChatMessage] = Field(default_factory=list)
-    # 高级参数，如指定推理策略
-    search_params: Optional[Dict[str, Any]] = None
-
-class RetrievedSource(BaseModel):
-    source_id: str
-    content: str
-    relevance_score: float
-
-class QueryResponse(BaseModel):
-    answer: str
-    session_id: str
-    retrieved_sources: List[RetrievedSource]
-```
-
-### 6.3 API 端点 (Endpoints)
-
-#### 6.3.1 知识库管理
-
--   **`POST /api/v1/knowledge`**: 添加新知识到知识库。
-    -   **描述**: 接收一个或多个知识源（URL、文件等），启动一个异步的知识收集、处理和存储任务。
-    -   **请求体**: `AddKnowledgeRequest`
-    -   **成功响应 (202 Accepted)**: `Task` (包含 `task_id`，用于后续查询任务状态)
-    -   **实现思路**: 该端点将请求转发给 `OrchestratorAgent`，后者启动 `DataCollectionAgent` 等一系列流程。这是一个长时任务，因此立即返回一个任务 ID。
-
--   **`GET /api/v1/tasks/{task_id}`**: 查询异步任务的状态。
-    -   **描述**: 根据任务 ID 获取知识添加任务的当前状态（如：处理中、已完成、失败）。
-    -   **路径参数**: `task_id: UUID`
-    -   **成功响应 (200 OK)**: `Task`
-
-#### 6.3.2 问答
-
--   **`POST /api/v1/chat/query`**: 提出问题并获取答案 (RAG)。
-    -   **描述**: 系统的核心端点，接收用户问题，执行完整的 RAG 流程（检索、增强、生成）并返回答案。
-    -   **请求体**: `QueryRequest`
-    -   **成功响应 (200 OK)**: `QueryResponse`
-    -   **实现思路**: 该端点直接调用 `OrchestratorAgent` 的核心问答和推理能力。`OrchestratorAgent` 将协调 `KnowledgeRetrievalAgent` 和 LLM 以生成最终答案。
-
-### 6.4 认证与安全
-
--   **API 密钥**: 所有 API 请求都需要在请求头中包含一个有效的 API 密钥 (`Authorization: Bearer <YOUR_API_KEY>`)。
--   **输入验证**: FastAPI 和 Pydantic 会自动处理大部分输入验证，防止注入等常见攻击。
--   **CORS**: 配置跨域资源共享 (CORS) 中间件，以允许来自指定域的 Web 前端访问。
-
-## 7. 未来展望
-
-### 7.1 更智能的协调
+### 6.1 更智能的协调
 
 - 引入更高级的计划和推理能力到 OrchestratorAgent:
   - **支持单路径推理（如 CoT, ReWOO）**：对于需要逐步推理或在步骤间调用工具/其他 LLM 进行决策的任务规划。
@@ -385,7 +234,7 @@ class QueryResponse(BaseModel):
 - 动态调整工作流程和智能体组合
 - 增强 OrchestratorAgent 对记忆写入的智能决策能力，例如基于上下文和记忆内容自动选择合并或覆盖策略。
 
-### 7.2 智能体能力增强
+### 6.2 智能体能力增强
 
 - **DataCollectionAgent**
 
@@ -415,13 +264,13 @@ class QueryResponse(BaseModel):
   - 过时知识识别
   - 引入记忆反思机制，定期或在特定触发条件下（如任务完成、遇到重复失败等）对存储的记忆进行总结、推理和抽象，形成更高阶的知识或行动策略。
 
-### 7.3 人机协同与交互
+### 6.3 人机协同与交互
 
 - 用户友好的管理界面
 - 人在回路 (Human-in-the-loop) 机制
 - 专家参与知识验证
 
-### 7.4 系统可扩展性与鲁棒性
+### 6.4 系统可扩展性与鲁棒性
 
 - 优化通信效率
 - 并发处理能力
@@ -429,14 +278,14 @@ class QueryResponse(BaseModel):
 - 微服务部署
 - 优化记忆存储和读取的性能，确保在记忆规模增大时系统仍能高效运作。
 
-### 7.5 安全性与权限控制
+### 6.5 安全性与权限控制
 
 - 细粒度访问控制
 - 数据加密
 - 隐私保护
 - 审计日志
 
-### 7.6 高级记忆管理 (新增章节)
+### 6.6 高级记忆管理 (新增章节)
 
 - **记忆读取优化**:
   - 研究和实现更先进的评分函数，例如基于注意力机制的相关性计算。
@@ -456,7 +305,7 @@ class QueryResponse(BaseModel):
   - 探索更复杂的记忆结构，如情景记忆、语义记忆、程序性记忆的分离与关联。
   - 研究如何将反思产生的抽象知识有效地组织并整合回现有记忆网络中。
 
-### 7.7 高级推理策略集成 (新增章节)
+### 6.7 高级推理策略集成 (新增章节)
 
 - **单路径推理策略应用**:
   - **CoT (Chain-of-Thought)**: 在各智能体（尤其是 OrchestratorAgent, KnowledgeRetrievalAgent, KnowledgeProcessingAgent）执行需要多步逻辑的任务时，显式生成并记录推理链，以提高透明度和可调试性。
@@ -471,62 +320,6 @@ class QueryResponse(BaseModel):
   - **推理辅助记忆反思**: 在记忆反思阶段，可以运用 CoT 或 ToT 等策略，对历史行动和观察进行更深入的分析和总结，提炼出更高质量的经验和知识。
   - **记忆指导推理路径选择**: 在多路径推理（如 ToT）中，可以利用从记忆中读取的过往成功/失败经验（基于新近度、相关性、重要性评分）来指导对不同推理分支的评估和选择，优先探索更有可能成功的路径。
 
-## 8. 评估与基准测试 (Evaluation & Benchmarking)
-
-为了确保系统的有效性、可靠性和持续改进，必须建立一个全面的评估与基准测试框架。该框架将用于量化各智能体及整个系统的性能，并在不同配置或模型版本之间进行比较。
-
-### 8.1 核心评估指标
-
-#### 8.1.1 RAG 管道评估 (End-to-End RAG Pipeline)
-
-使用类似 [RAGAs](https://github.com/explodinggradients/ragas) 的框架，从端到端的角度评估问答质量：
-
--   **忠实度 (Faithfulness)**: 评估生成的答案是否完全基于检索到的上下文，减少幻觉。
--   **答案相关性 (Answer Relevancy)**: 评估答案与原始问题的相关程度。
--   **上下文精确率 (Context Precision)**: 衡量检索到的上下文与问题相关的比例。
--   **上下文召回率 (Context Recall)**: 衡量所有相关上下文被成功检索的比例。
--   **答案语义相似度 (Answer Semantic Similarity)**: 评估生成答案与标准答案（ground truth）在语义上的一致性。
--   **答案正确性 (Answer Correctness)**: 评估生成答案与标准答案的事实一致性。
-
-#### 8.1.2 系统性能指标
-
--   **端到端延迟 (End-to-End Latency)**: 从接收用户请求到返回最终结果的总耗时。
--   **吞吐量 (Throughput)**: 系统在单位时间内可以处理的请求数量。
--   **成本 (Cost)**: 执行单次查询或完成特定任务（如完整索引一批文档）的计算资源和 API 调用成本。
-
-### 8.2 评估数据集
-
--   **构建标准问答集**: 针对特定知识领域，手动或半自动地创建一组具有标准答案（Ground Truth）的问答对。
--   **合成数据集**: 利用 LLM 生成更多样化、更复杂的测试问题，包括需要多步推理、比较或反事实思考的问题。
--   **真实用户查询日志**: 在获得许可的情况下，使用脱敏后的真实用户查询数据进行评估。
-
-### 8.3 特定智能体的评估方法
-
--   **DataCollectionAgent**:
-    -   **覆盖率 (Coverage)**: 成功收集到的数据量与源数据总量的比例。
-    -   **准确性 (Accuracy)**: 收集到的数据与原始数据的一致性。
-    -   **格式兼容性 (Format Compatibility)**: 成功解析不同文档格式（PDF, Markdown等）的比率。
-
--   **KnowledgeProcessingAgent**:
-    -   **信息保留度 (Information Retention)**: 对比处理前后的文本，评估关键信息在清洗、分块过程中的保留程度。
-    -   **向量化质量**: 使用下游任务（如分类、聚类）的性能来间接评估文本向量的质量。
-    -   **实体/关系抽取准确率**: 与人工标注的数据进行比较，计算精确率和召回率。
-
--   **KnowledgeRetrievalAgent**:
-    -   **检索相关性 (Retrieval Relevance)**: 使用 **Mean Reciprocal Rank (MRR)** 和 **Normalized Discounted Cumulative Gain (nDCG)** 等指标评估排序后检索结果的质量。
-
--   **OrchestratorAgent (推理与规划能力)**:
-    -   **任务成功率 (Task Success Rate)**: 对于需要复杂规划的多步任务，评估最终成功完成任务的比例。
-    -   **规划效率 (Planning Efficiency)**: 评估生成的任务计划的步骤数量、资源消耗和执行时间。
-    -   **工具/智能体选择准确率**: 评估其为子任务选择正确智能体或工具的准确性。
-
-### 8.4 评估工作流
-
-1.  **基准测试环境**: 建立一个隔离的、可复现的测试环境。
-2.  **自动化评估流水线**: 创建一个CI/CD流程，在代码变更或模型更新后自动运行评估脚本。
-3.  **结果可视化与报告**: 将评估结果记录在仪表盘中，用于追踪性能变化趋势，并定期生成对比报告。
-4.  **A/B 测试**: 在生产环境中，对不同版本的模型、提示或系统配置进行 A/B 测试，以验证改进的实际效果。
-
-## 9. 结语
+## 7. 结语
 
 通过持续迭代和演进，该多智能体知识库系统有望成为企业和组织内强大的知识赋能平台。系统的模块化设计和智能体协作机制，结合先进的记忆管理与反思能力，为未来的扩展和优化提供了坚实的基础。

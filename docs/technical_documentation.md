@@ -18,60 +18,83 @@
 
 ### 2.1 整体架构
 
-系统采用多智能体协作模式，由一个协调智能体（OrchestratorAgent）统一调度和管理其他专业智能体。核心存储包括向量数据库、图数据库和缓存。
+系统采用分层架构，自上而下分为表现层、编排与控制层、执行层以及数据与知识层。这种设计模式确保了各层职责分明、高度解耦，从而提升了系统的可扩展性、可维护性和灵活性。
 
 ### 2.2 架构图
 
 ```mermaid
 graph TD
-    User[用户/外部系统] -->|请求/事件| O[OrchestratorAgent]
+    A[用户]
 
-    subgraph "知识库核心存储"
-        VDB[(Vector Database)]
-        GDB[(Graph Database)]
-        Cache[(Cache)]
+    subgraph 表现层 (Presentation Layer)
+        B[Web/Chat Interface: React/Vue, WebSocket]
     end
 
-    O -->|指令| DCA[DataCollectionAgent]
-    DCA -->|原始数据| O
-    O -->|待处理数据| KPA[KnowledgeProcessingAgent]
-    KPA -->|处理后知识| O
-    O -->|存储知识| KSA[KnowledgeStorageAgent]
-    KSA <--> VDB
-    KSA <--> GDB
-    KSA <--> Cache
+    subgraph 编排与控制层 (Orchestration Layer)
+        C1[用户接口智能体 (UI Agent)]
+        C2[主控/编排智能体 (Orchestrator)]
+        C1 <--> C2
+    end
 
-    O -->|查询请求| KRA[KnowledgeRetrievalAgent]
-    KRA -->|查询数据| KSA
-    KSA -->|检索结果| KRA
-    KRA -->|响应| O
-    O -->|结果| User
+    subgraph 执行层 (Execution Layer)
+        D1[查询分析智能体 (Query Parser)] --> D2[任务分解智能体 (Task Decomposer)] --> D3[信息检索体 (Retrieval Agents)] --> D4[答案生成智能体 (Answer Generator)]
+    end
 
-    O -->|维护指令/变更事件| KMA[KnowledgeMaintenanceAgent]
-    KMA -->|读取/验证| KSA
-    KMA -->|更新指令| O
-    KMA -->|验证结果| O
+    subgraph 数据与知识层 (Data Layer)
+        E1[(Vector DB)]
+        E2[(SQL DB)]
+        E3[(Graph DB)]
+        E4[(Internal APIs)]
+    end
 
-    DCA -.-> Source1[项目文档]
-    DCA -.-> Source2[代码库]
-    DCA -.-> Source3[Git仓库]
-    DCA -.-> Source4[外部资料]
+    A -- Request --> B
+    B -- Response --> A
 
-    KPA -.-> LLM[LLM服务集成]
+    B -- User Query --> C1
+    C2 -- Formatted Answer --> B
+
+    C1 -- Feedback --> D1
+    C2 -- Sub-tasks --> D2
+    D4 -- Synthesized Info --> C2
+
+    D3 -- Data --> E1
+    D3 -- Data --> E2
+    D3 -- Data --> E3
+    D3 -- Data --> E4
 ```
 
-### 2.3 组件说明
+### 2.3 分层说明
 
-- **用户/外部系统**：系统的最终用户或触发系统运行的外部事件源。
-- **OrchestratorAgent**：系统的总控单元，负责任务分发、结果汇总以及会话上下文管理。
-- **DataCollectionAgent**：负责从多种数据源收集原始数据。
-- **KnowledgeProcessingAgent**：负责对原始数据进行加工处理，如清洗、向量化。
-- **KnowledgeStorageAgent**：负责将处理后的知识存入相应的数据库。
-- **KnowledgeRetrievalAgent**：负责根据查询请求和会话上下文从知识库中检索信息。
-- **KnowledgeMaintenanceAgent**：负责知识库的日常维护，如更新和验证。
-- **知识库核心存储**：包括向量数据库（用于语义搜索）、图数据库（用于知识关联）和缓存（提升访问速度）。
-- **会话记忆存储 (New)**: 用于持久化存储 `ConversationContext`，例如 Redis 或其他键值存储。
-- **LLM 服务集成**：KnowledgeProcessingAgent 可能依赖 LLM 进行高级处理。
+#### 2.3.1 表现层 (Presentation Layer)
+- **职责**: 作为系统的用户交互界面，负责接收用户的查询请求并以友好的格式展示最终答案。
+- **组件**:
+  - **Web/Chat Interface**: 基于 React/Vue 和 WebSocket 等前端技术构建，为用户提供实时、动态的交互体验。
+
+#### 2.3.2 编排与控制层 (Orchestration Layer)
+- **职责**: 系统的“大脑”，负责核心的协调与控制。它管理用户会话，解析用户意图，并将任务分派给执行层，最终将格式化的答案返回给表现层。
+- **组件**:
+  - **用户接口智能体 (UI Agent)**: 直接与表现层对接，管理用户交互逻辑，并将用户输入转化为内部指令。
+  - **主控/编排智能体 (Orchestrator)**: 系统的总指挥，负责任务的整体规划、智能体之间的协作以及最终结果的合成。它对应于本文档后续章节中详细描述的 `OrchestratorAgent`。
+
+#### 2.3.3 执行层 (Execution Layer)
+- **职责**: 负责执行具体的子任务。它将来自编排层的复杂任务分解、执行，并从数据层获取所需信息。
+- **组件**:
+  - **查询分析智能体 (Query Parser)**: 对用户查询进行深入分析，提取关键意图和实体。
+  - **任务分解智能体 (Task Decomposer)**: 将复杂的查询分解为一系列可执行的、更小的子任务。
+  - **信息检索体 (Retrieval Agents)**: 根据子任务，从数据与知识层的不同数据源中检索信息。这对应于 `KnowledgeRetrievalAgent` 的核心功能。
+  - **答案生成智能体 (Answer Generator)**: 综合检索到的信息，生成连贯、准确的答案，并将合成后的信息（Synthesized Info）返回给编排层。
+
+#### 2.3.4 数据与知识层 (Data Layer)
+- **职责**: 为系统提供所有必需的数据和知识。
+- **组件**:
+  - **向量数据 (Vector DB)**: 存储文本、图像等内容的向量表示，用于高效的语义相似度搜索。
+  - **关系型数据 (SQL DB)**: 存储结构化数据。
+  - **知识图谱数据库 (Graph DB)**: 存储实体及其相互关系，用于复杂的关联查询和推理。
+  - **内部 API 服务 (Internal APIs)**: 提供对组织内部其他系统或服务的访问接口。
+
+### 2.4 智能体映射关系
+
+本文档中描述的 `DataCollectionAgent`, `KnowledgeProcessingAgent`, 和 `KnowledgeStorageAgent` 主要服务于**数据与知识层**的构建和维护。`KnowledgeRetrievalAgent` 的功能分布在**执行层**的 `Query Parser` 和 `Retrieval Agents` 中。`KnowledgeMaintenanceAgent` 负责确保**数据与知识层**的持续更新与准确性。而 `OrchestratorAgent` 则是**编排与控制层**的核心。
 
 ## 3. 智能体详细设计
 
