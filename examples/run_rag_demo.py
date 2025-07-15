@@ -47,6 +47,24 @@ async def run_rag_demo():
     print(f"Answer: {query_result['answer']}")
     print(f"Retrieved sources: {len(query_result['retrieved_sources'])}")
 
+    # --- 4. Test another query ---
+    print("\n--- Step 3: Testing another query ---")
+    query2 = "How to install using NPX?"
+    query_payload2 = {
+        "query": query2,
+        "search_params": {
+            "top_k": 3
+        }
+    }
+    query_result2 = await orchestrator.receive_request(
+        source="user",
+        request_type="query",
+        payload=query_payload2
+    )
+    print(f"Query: {query2}")
+    print(f"Answer: {query_result2['answer']}")
+    print(f"Retrieved sources: {len(query_result2['retrieved_sources'])}")
+
     print("\n--- Demo Finished ---")
 
 if __name__ == "__main__":

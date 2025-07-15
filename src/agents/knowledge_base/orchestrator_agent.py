@@ -171,9 +171,24 @@ class OrchestratorAgent:
         if not retrieved_candidates:
             return "I don't have relevant information to answer your question."
         
-        # Simple template-based answer generation for now
-        context_snippets = []
+        # Simple relevance-based answer generation
+        query_lower = query.lower()
+        
+        # Find the most relevant candidates by keyword matching
+        relevant_candidates = []
         for candidate in retrieved_candidates[:3]:  # Use top 3 results
+            content_lower = candidate.content.lower()
+            # Simple keyword matching for relevance
+            if any(word in content_lower for word in query_lower.split()):
+                relevant_candidates.append(candidate)
+        
+        if not relevant_candidates:
+            # If no direct keyword match, use the first candidate
+            relevant_candidates = [retrieved_candidates[0]]
+        
+        # Build context from relevant candidates
+        context_snippets = []
+        for candidate in relevant_candidates:
             context_snippets.append(candidate.content[:300])  # Truncate for context
         
         context = "\n\n".join(context_snippets)
