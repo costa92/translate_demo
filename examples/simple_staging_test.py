@@ -1,13 +1,13 @@
 
 import asyncio
-from src.agents.knowledge_base.orchestrator_agent import OrchestratorAgent
+from agents.knowledge_base.orchestrator_agent import OrchestratorAgent
 
 async def main():
     orchestrator = OrchestratorAgent()
     storage_agent = orchestrator.agents['KnowledgeStorageAgent']
 
     # 1. Add an item to staging
-    await orchestrator.receive_request("system", "maintain", {"source": "test"})
+    await orchestrator.receive_request("system", "maintain", {"source": "test", "content": "test content for staging"})
 
     # 2. Check if it's in staging
     staged_items = await storage_agent.list_staged_chunks()

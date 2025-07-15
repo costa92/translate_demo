@@ -1,4 +1,7 @@
 import asyncio
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.agents.knowledge_base.orchestrator_agent import OrchestratorAgent
 
 async def main():
@@ -25,7 +28,7 @@ async def main():
     add_knowledge_payload = {
         "sources": knowledge_sources
     }
-    result = orchestrator.receive_request(
+    result = await orchestrator.receive_request(
         source="user",
         request_type="add_knowledge",
         payload=add_knowledge_payload
@@ -42,7 +45,7 @@ async def main():
             "multimodal_query": True # A flag to indicate a multimodal query
         }
     }
-    query_result = orchestrator.receive_request(
+    query_result = await orchestrator.receive_request(
         source="user",
         request_type="query",
         payload=query_payload
