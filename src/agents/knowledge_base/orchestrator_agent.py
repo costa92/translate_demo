@@ -1,10 +1,10 @@
 import asyncio
 from typing import Dict, Any, List, Optional
-from data_collection_agent import DataCollectionAgent
-from knowledge_processing_agent import KnowledgeProcessingAgent
-from knowledge_storage_agent import KnowledgeStorageAgent
-from knowledge_retrieval_agent import KnowledgeRetrievalAgent
-from knowledge_maintenance_agent import KnowledgeMaintenanceAgent
+from .data_collection_agent import DataCollectionAgent
+from .knowledge_processing_agent import KnowledgeProcessingAgent
+from .knowledge_storage_agent import KnowledgeStorageAgent
+from .knowledge_retrieval_agent import KnowledgeRetrievalAgent
+from .knowledge_maintenance_agent import KnowledgeMaintenanceAgent
 
 class OrchestratorAgent:
     def __init__(self, 
@@ -31,39 +31,39 @@ class OrchestratorAgent:
             'KnowledgeProcessingAgent': KnowledgeProcessingAgent(),
             'KnowledgeStorageAgent': storage_agent,
             'KnowledgeRetrievalAgent': KnowledgeRetrievalAgent(storage_agent),
-            'KnowledgeMaintenanceAgent': KnowledgeMaintenanceAgent(),
+            'KnowledgeMaintenanceAgent': KnowledgeMaintenanceAgent(storage_agent),
         }
         
     def register_agent(self, agent_name: str, agent_instance: Any):
         """Register additional agents."""
         self.agents[agent_name] = agent_instance
 
-    def receive_request(self, source: str, request_type: str, payload: Dict):
+    async def receive_request(self, source: str, request_type: str, payload: Dict):
         """
         Main entry point for handling requests.
         Enhanced to support complex workflows including full RAG pipeline.
         """
         try:
             if request_type == "add_knowledge":
-                return self._handle_add_knowledge(payload)
+                return await self._handle_add_knowledge(payload)
             elif request_type == "query":
-                return self._handle_query(payload)
+                return await self._handle_query(payload)
             elif request_type == "collect":
-                return self.distribute_task("DataCollectionAgent", "collect", payload)
+                return await self.distribute_task("DataCollectionAgent", "collect", payload)
             elif request_type == "process":
-                return self.distribute_task("KnowledgeProcessingAgent", "process", payload)
+                return await self.distribute_task("KnowledgeProcessingAgent", "process", payload)
             elif request_type == "store":
-                return self.distribute_task("KnowledgeStorageAgent", "store", payload)
+                return await self.distribute_task("KnowledgeStorageAgent", "store", payload)
             elif request_type == "retrieve":
-                return self.distribute_task("KnowledgeRetrievalAgent", "search", payload)
+                return await self.distribute_task("KnowledgeRetrievalAgent", "search", payload)
             elif request_type == "maintain":
-                return self.distribute_task("KnowledgeMaintenanceAgent", "check_updates", payload)
+                return await self.distribute_task("KnowledgeMaintenanceAgent", "check_updates", payload)
             else:
                 return {"status": "error", "message": "Unknown request type"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def _handle_add_knowledge(self, payload: Dict) -> Dict:
+    async def _handle_add_knowledge(self, payload: Dict) -> Dict:
         """
         Handle full knowledge addition workflow: collect -> process -> store
         """
@@ -75,7 +75,7 @@ class OrchestratorAgent:
         # Step 1: Collect from all sources
         for source in sources:
             try:
-                documents = self.distribute_task("DataCollectionAgent", "collect", source)
+                documents = await self.distribute_task("DataCollectionAgent", "collect", source)
                 # Check if result is an error
                 if isinstance(documents, dict) and documents.get('status') == 'error':
                     return documents
@@ -92,7 +92,7 @@ class OrchestratorAgent:
         
         # Step 2: Process documents
         try:
-            processed_chunks = self.distribute_task("KnowledgeProcessingAgent", "process", all_documents)
+            processed_chunks = await self.distribute_task("KnowledgeProcessingAgent", "process", all_documents)
             if isinstance(processed_chunks, dict) and processed_chunks.get('status') == 'error':
                 return processed_chunks
             if not processed_chunks:
@@ -102,7 +102,7 @@ class OrchestratorAgent:
             
         # Step 3: Store processed chunks
         try:
-            storage_result = self.distribute_task("KnowledgeStorageAgent", "store", processed_chunks)
+            storage_result = await self.distribute_task("KnowledgeStorageAgent", "store", processed_chunks)
             if isinstance(storage_result, dict) and storage_result.get('status') == 'error':
                 return storage_result
             if not storage_result:
@@ -117,7 +117,7 @@ class OrchestratorAgent:
             "sources_processed": len(sources)
         }
 
-    def _handle_query(self, payload: Dict) -> Dict:
+    async def _handle_query(self, payload: Dict) -> Dict:
         """
         Handle RAG query workflow: retrieve -> generate
         """
@@ -130,7 +130,7 @@ class OrchestratorAgent:
         # Step 1: Retrieve relevant knowledge
         try:
             search_payload = {"query": query, **search_params}
-            retrieved_candidates = self.distribute_task("KnowledgeRetrievalAgent", "search", search_payload)
+            retrieved_candidates = await self.distribute_task("KnowledgeRetrievalAgent", "search", search_payload)
             
             if not retrieved_candidates:
                 return {
@@ -187,7 +187,7 @@ Please note: This is a simplified response. For more accurate answers, an LLM in
         
         return answer
 
-    def distribute_task(self, agent_name: str, task_name: str, task_params: Dict):
+    async def distribute_task(self, agent_name: str, task_name: str, task_params: Dict):
         """Enhanced task distribution with better error handling."""
         if agent_name not in self.agents:
             return {"status": "error", "message": f"Agent {agent_name} not found"}
@@ -199,17 +199,23 @@ Please note: This is a simplified response. For more accurate answers, an LLM in
         
         try:
             task_method = getattr(agent, task_name)
-            return task_method(task_params)
+            # Check if the method is async
+            if asyncio.iscoroutinefunction(task_method):
+                return await task_method(task_params)
+            else:
+                return task_method(task_params)
         except Exception as e:
             return {"status": "error", "message": f"Task execution failed: {str(e)}"}
 
     def aggregate_result(self, source_agent: str, status: str, result: Dict):
-        """Enhanced result aggregation."""
+        """
+        Enhanced result aggregation."""
         print(f"Result from {source_agent}: {status} - {result}")
         return {"status": "aggregated", "result": result}
         
     def get_agent_status(self) -> Dict:
-        """Get status of all registered agents."""
+        """
+        Get status of all registered agents."""
         return {
             "registered_agents": list(self.agents.keys()),
             "storage_provider": type(self.agents['KnowledgeStorageAgent'].provider).__name__,

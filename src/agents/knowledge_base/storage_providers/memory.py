@@ -1,20 +1,31 @@
 from typing import List, Dict, Any
-from .base import BaseStorageProvider, RetrievedChunk
+from .base import BaseStorageProvider, RetrievedChunk, ProcessedKnowledgeChunk
 
 class MemoryStorageProvider(BaseStorageProvider):
     """
     A simple in-memory storage provider for demonstration and testing.
     Knowledge is lost when the application stops.
+    Now includes a simple staging area.
     """
 
     def __init__(self, config: Dict[str, Any] = None):
         super().__init__(config or {})
         self.vector_db: Dict[str, Any] = {}
+        self.staged_chunks: Dict[str, Any] = {}
 
-    def store(self, chunks: List[Any]) -> bool:
+    async def store(self, chunks: List[ProcessedKnowledgeChunk]) -> bool:
+        """
+        Stores chunks in the staging area or main DB based on metadata.
+        """
         print(f"[MemoryProvider] Storing {len(chunks)} chunks.")
         for chunk in chunks:
-            self.vector_db[chunk.id] = chunk
+            print(f"[MemoryProvider] Storing chunk: {chunk.id}")
+            if chunk.metadata.get('stage', False):
+                print(f"[MemoryProvider] Staging chunk: {chunk.id}")
+                self.staged_chunks[chunk.id] = chunk
+            else:
+                print(f"[MemoryProvider] Storing chunk to DB: {chunk.id}")
+                self.vector_db[chunk.id] = chunk
         return True
 
     def retrieve(self, query_vector: List[float], top_k: int, filters: Dict) -> List[RetrievedChunk]:
@@ -37,3 +48,19 @@ class MemoryStorageProvider(BaseStorageProvider):
     def get_all_chunk_ids(self) -> List[str]:
         print("[MemoryProvider] Fetching all chunk IDs.")
         return list(self.vector_db.keys())
+
+    async def list_staged_chunks(self) -> List[str]:
+        """Lists the IDs of all chunks currently in the staging area."""
+        print("[MemoryProvider] Listing staged chunks.")
+        return list(self.staged_chunks.keys())
+
+    async def validate_and_promote(self, chunk_id: str) -> bool:
+        """
+        Moves a chunk from the staging area to the main vector database.
+        """
+        print(f"[MemoryProvider] Promoting chunk {chunk_id}.")
+        if chunk_id in self.staged_chunks:
+            chunk = self.staged_chunks.pop(chunk_id)
+            self.vector_db[chunk.id] = chunk
+            return True
+        return False

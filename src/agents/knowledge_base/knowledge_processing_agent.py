@@ -1,6 +1,6 @@
 import hashlib
 from typing import List, Dict, Optional
-from data_collection_agent import RawDocument
+from .data_collection_agent import RawDocument
 
 class ProcessedKnowledgeChunk:
     def __init__(self, id: str, original_id: str, text_content: str, vector: List[float], category: str, entities: List[str], relationships: List[Dict], metadata: Dict):

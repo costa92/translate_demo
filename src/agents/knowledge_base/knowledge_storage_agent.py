@@ -1,13 +1,13 @@
 from typing import List, Dict, Any
-from knowledge_processing_agent import ProcessedKnowledgeChunk
-from storage_providers.base import BaseStorageProvider, RetrievedChunk
-from storage_providers.memory import MemoryStorageProvider
-from storage_providers.notion import NotionStorageProvider
-from storage_providers.oss import OSSStorageProvider
-# from storage_providers.google_drive import GoogleDriveStorageProvider
-# from storage_providers.google_drive_service_account import GoogleDriveServiceAccountProvider
-# from storage_providers.gcs import GCSStorageProvider
-from storage_providers.onedrive import OneDriveStorageProvider
+from .knowledge_processing_agent import ProcessedKnowledgeChunk
+from .storage_providers.base import BaseStorageProvider, RetrievedChunk
+from .storage_providers.memory import MemoryStorageProvider
+from .storage_providers.notion import NotionStorageProvider
+from .storage_providers.oss import OSSStorageProvider
+# from .storage_providers.google_drive import GoogleDriveStorageProvider
+# from .storage_providers.google_drive_service_account import GoogleDriveServiceAccountProvider
+# from .storage_providers.gcs import GCSStorageProvider
+from .storage_providers.onedrive import OneDriveStorageProvider
 
 class KnowledgeStorageAgent:
     """
@@ -35,11 +35,12 @@ class KnowledgeStorageAgent:
         
         return provider_class(config)
 
-    def store(self, chunks: List[ProcessedKnowledgeChunk]) -> bool:
+    async def store(self, chunks: List[ProcessedKnowledgeChunk]) -> bool:
         """
         Delegates the store operation to the chosen provider.
         """
-        return self.provider.store(chunks)
+        print(f"[KnowledgeStorageAgent] Storing {len(chunks)} chunks via provider {type(self.provider).__name__}")
+        return await self.provider.store(chunks)
 
     def retrieve(self, query_vector: List[float], top_k: int, filters: Dict) -> List[RetrievedChunk]:
         """
@@ -52,3 +53,15 @@ class KnowledgeStorageAgent:
         Delegates the get_all_chunk_ids operation to the chosen provider.
         """
         return self.provider.get_all_chunk_ids()
+
+    async def list_staged_chunks(self) -> List[str]:
+        """Delegates listing staged chunks to the provider."""
+        if hasattr(self.provider, 'list_staged_chunks'):
+            return await self.provider.list_staged_chunks()
+        return []
+
+    async def validate_and_promote(self, chunk_id: str) -> bool:
+        """Delegates promoting a chunk to the provider."""
+        if hasattr(self.provider, 'validate_and_promote'):
+            return await self.provider.validate_and_promote(chunk_id)
+        return False

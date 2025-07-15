@@ -1,6 +1,6 @@
 from typing import List, Dict
-from knowledge_storage_agent import KnowledgeStorageAgent
-from storage_providers.base import RetrievedChunk
+from .knowledge_storage_agent import KnowledgeStorageAgent
+from .storage_providers.base import RetrievedChunk
 
 
 class AnswerCandidate:
