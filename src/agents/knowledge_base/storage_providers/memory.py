@@ -1,6 +1,5 @@
 from typing import List, Dict, Any
 from .base import BaseStorageProvider, RetrievedChunk
-from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 class MemoryStorageProvider(BaseStorageProvider):
     """
@@ -9,10 +8,10 @@ class MemoryStorageProvider(BaseStorageProvider):
     """
 
     def __init__(self, config: Dict[str, Any] = None):
-        super().__init__(config)
-        self.vector_db: Dict[str, ProcessedKnowledgeChunk] = {}
+        super().__init__(config or {})
+        self.vector_db: Dict[str, Any] = {}
 
-    def store(self, chunks: List[ProcessedKnowledgeChunk]) -> bool:
+    def store(self, chunks: List[Any]) -> bool:
         print(f"[MemoryProvider] Storing {len(chunks)} chunks.")
         for chunk in chunks:
             self.vector_db[chunk.id] = chunk

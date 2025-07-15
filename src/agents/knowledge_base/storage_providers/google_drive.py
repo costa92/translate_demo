@@ -36,7 +36,7 @@ class GoogleDriveStorageProvider(BaseStorageProvider):
 
         if os.path.exists(token_path):
             creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-        
+
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
@@ -48,7 +48,7 @@ class GoogleDriveStorageProvider(BaseStorageProvider):
                     )
                 flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
                 creds = flow.run_local_server(port=0)
-            
+
             with open(token_path, "w") as token:
                 token.write(creds.to_json())
         return creds
@@ -80,14 +80,14 @@ class GoogleDriveStorageProvider(BaseStorageProvider):
                 file_metadata = {"name": f"{chunk.id}.json", "parents": [self.folder_id]}
                 chunk_dict = chunk.__dict__
                 json_bytes = json.dumps(chunk_dict).encode('utf-8')
-                
+
                 # Create a temporary file to upload
                 tmp_file_path = f"{chunk.id}.tmp.json"
                 with open(tmp_file_path, "wb") as f:
                     f.write(json_bytes)
-                
+
                 media = MediaFileUpload(tmp_file_path, mimetype="application/json")
-                
+
                 self.service.files().create(body=file_metadata, media_body=media, fields="id").execute()
                 os.remove(tmp_file_path)
             return True
@@ -97,7 +97,7 @@ class GoogleDriveStorageProvider(BaseStorageProvider):
 
     def retrieve(self, query_vector: List[float], top_k: int, filters: Dict) -> List[RetrievedChunk]:
         """
-        Retrieves chunks from Google Drive. 
+        Retrieves chunks from Google Drive.
         NOTE: This provider does not support vector search. It retrieves the most recent files.
         A more advanced implementation would require a separate index.
         """
@@ -114,7 +114,7 @@ class GoogleDriveStorageProvider(BaseStorageProvider):
                 done = False
                 while done is False:
                     status, done = downloader.next_chunk()
-                
+
                 chunk_data = json.loads(fh.getvalue().decode('utf-8'))
                 retrieved_chunks.append(
                     RetrievedChunk(

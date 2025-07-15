@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
-from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+
+class ProcessedKnowledgeChunk:
+    """Dummy class to avoid circular imports"""
+    pass
 
 class RetrievedChunk:
     def __init__(self, id: str, text_content: str, score: float, metadata: Dict):
@@ -25,7 +28,7 @@ class BaseStorageProvider(ABC):
         print(f"Initialized {self.__class__.__name__}")
 
     @abstractmethod
-    def store(self, chunks: List[ProcessedKnowledgeChunk]) -> bool:
+    def store(self, chunks: List[Any]) -> bool:
         """
         Stores a list of processed knowledge chunks in the backend.
         Returns True on success, False on failure.
@@ -43,6 +46,6 @@ class BaseStorageProvider(ABC):
     @abstractmethod
     def get_all_chunk_ids(self) -> List[str]:
         """
-        Retrierieves all chunk IDs from the storage.
+        Retrieves all chunk IDs from the storage.
         """
         pass

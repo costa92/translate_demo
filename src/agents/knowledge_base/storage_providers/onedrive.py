@@ -1,6 +1,5 @@
 from typing import List, Dict, Any
 from .base import BaseStorageProvider, RetrievedChunk
-from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
 
 class OneDriveStorageProvider(BaseStorageProvider):
     """
@@ -12,7 +11,7 @@ class OneDriveStorageProvider(BaseStorageProvider):
         super().__init__(config)
         print("  -> TODO: Initialize OneDrive client with OAuth2 credentials.")
 
-    def store(self, chunks: List[ProcessedKnowledgeChunk]) -> bool:
+    def store(self, chunks: List[Any]) -> bool:
         print(f"[OneDriveProvider] Storing {len(chunks)} chunks.")
         print("  -> TODO: Implement storing chunks as files in a specific OneDrive folder.")
         return True

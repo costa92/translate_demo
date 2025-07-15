@@ -1,13 +1,13 @@
 from typing import List, Dict, Any
-from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
-from .storage_providers.base import BaseStorageProvider, RetrievedChunk
-from .storage_providers.memory import MemoryStorageProvider
-from .storage_providers.notion import NotionStorageProvider
-from .storage_providers.oss import OSSStorageProvider
-from .storage_providers.google_drive import GoogleDriveStorageProvider
-from .storage_providers.google_drive_service_account import GoogleDriveServiceAccountProvider
-from .storage_providers.gcs import GCSStorageProvider
-from .storage_providers.onedrive import OneDriveStorageProvider
+from knowledge_processing_agent import ProcessedKnowledgeChunk
+from storage_providers.base import BaseStorageProvider, RetrievedChunk
+from storage_providers.memory import MemoryStorageProvider
+from storage_providers.notion import NotionStorageProvider
+from storage_providers.oss import OSSStorageProvider
+# from storage_providers.google_drive import GoogleDriveStorageProvider
+# from storage_providers.google_drive_service_account import GoogleDriveServiceAccountProvider
+# from storage_providers.gcs import GCSStorageProvider
+from storage_providers.onedrive import OneDriveStorageProvider
 
 class KnowledgeStorageAgent:
     """
@@ -24,9 +24,9 @@ class KnowledgeStorageAgent:
             "memory": MemoryStorageProvider,
             "notion": NotionStorageProvider,
             "oss": OSSStorageProvider,
-            "google_drive": GoogleDriveStorageProvider,
-            "google_drive_service_account": GoogleDriveServiceAccountProvider,
-            "gcs": GCSStorageProvider,
+            # "google_drive": GoogleDriveStorageProvider,
+            # "google_drive_service_account": GoogleDriveServiceAccountProvider,
+            # "gcs": GCSStorageProvider,
             "onedrive": OneDriveStorageProvider,
         }
         provider_class = provider_map.get(provider_type.lower())

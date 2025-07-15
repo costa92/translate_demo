@@ -21,6 +21,8 @@ class DataCollectionAgent:
             return self._collect_from_file(source_config.get("path"))
         elif source_type == "http":
             return self._collect_from_http(source_config.get("url"))
+        elif source_type == "text":
+            return self._collect_from_text(source_config.get("location"), source_config.get("metadata", {}))
         else:
             raise ValueError(f"Unsupported source type: {source_type}")
 
@@ -35,7 +37,7 @@ class DataCollectionAgent:
             raise ValueError(f"Unsupported file type: {ext}")
 
     def _read_txt(self, file_path: str) -> List[RawDocument]:
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding='utf-8') as f:
             content = f.read()
         return [RawDocument(id=file_path, content=content, source=file_path, type="text", metadata={})]
 
@@ -53,3 +55,19 @@ class DataCollectionAgent:
         response = requests.get(url)
         response.raise_for_status()
         return [RawDocument(id=url, content=response.text, source=url, type="http", metadata={})]
+        
+    def _collect_from_text(self, text_content: str, metadata: Dict = None) -> List[RawDocument]:
+        """Collect from direct text content"""
+        if metadata is None:
+            metadata = {}
+        
+        # Generate a unique ID for the text
+        text_id = f"text_{hash(text_content)}"
+        
+        return [RawDocument(
+            id=text_id,
+            content=text_content,
+            source="direct_text",
+            type="text",
+            metadata=metadata
+        )]
