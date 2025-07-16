@@ -32,15 +32,30 @@ class RAGAgent:
 
     def _build_prompt(self, query: str, context: list[str]) -> str:
         """
-        Builds the prompt for the LLM.
+        Builds the prompt for the LLM with improved Chinese support.
         """
         context_str = "\n".join(context)
-        prompt = f"""
-        Given the following context, please answer the query.
+        
+        # Detect if query is in Chinese
+        is_chinese = any('\u4e00' <= char <= '\u9fff' for char in query)
+        
+        if is_chinese:
+            prompt = f"""请根据以下上下文信息，准确回答用户的问题。请直接给出简洁、准确的答案，不要重复上下文内容。
 
-        Context:
-        {context_str}
+上下文信息：
+{context_str}
 
-        Query: {query}
-        """
+用户问题：{query}
+
+请用中文回答，答案要简洁明确："""
+        else:
+            prompt = f"""Based on the following context information, please provide a precise and concise answer to the user's question. Give a direct answer without repeating the context.
+
+Context:
+{context_str}
+
+Question: {query}
+
+Answer:"""
+        
         return prompt

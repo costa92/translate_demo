@@ -17,11 +17,13 @@ class DeepSeekLLM(LLMBase):
             temperature: 温度参数
             **kwargs: 其他参数传递给ChatDeepSeek
         """
+        import os
         super().__init__(model, temperature, **kwargs)
-        self.model = model or settings_instance.get('DEEPSEEK_MODEL', "deepseek-r1:14b")
+        self.model = model or settings_instance.get('DEEPSEEK_MODEL', "deepseek-chat")
         self.temperature = temperature
-        self.api_key = kwargs.get('api_key') or settings_instance.get('DEEPSEEK_API_KEY')
-        self.base_url = kwargs.get('base_url') or settings_instance.get('DEEPSEEK_BASE_URL')
+        # 优先使用环境变量，然后是配置文件，最后是kwargs
+        self.api_key = kwargs.get('api_key') or os.environ.get('DEEPSEEK_API_KEY') or settings_instance.get('DEEPSEEK_API_KEY')
+        self.base_url = kwargs.get('base_url') or os.environ.get('DEEPSEEK_BASE_URL') or settings_instance.get('DEEPSEEK_BASE_URL')
 
         self._llm = ChatDeepSeek(
             model=self.model, 

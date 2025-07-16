@@ -20,13 +20,18 @@ class KnowledgeRetrievalAgent:
         print(f"Searching for query: {query}")
 
         # Use a dummy vector for now, as we don't have a text-to-vector model yet.
-        dummy_vector = [0.1, 0.2, 0.3] 
-        
+        dummy_vector = [0.1, 0.2, 0.3]
+
+        # Create filters including the query text for content-based matching
+        filters = params.get("filters", {})
+        if query:
+            filters["query_text"] = query
+
         # Retrieve chunks from the storage agent
         retrieved_chunks: List[RetrievedChunk] = self.storage_agent.retrieve(
             query_vector=dummy_vector,
-            top_k=5, # Retrieve top 5 relevant chunks
-            filters={}
+            top_k=params.get("top_k", 5), # Get top_k from params or default to 5
+            filters=filters
         )
 
         # Transform retrieved chunks into answer candidates
@@ -40,5 +45,5 @@ class KnowledgeRetrievalAgent:
                     context_snippets=[chunk.text_content] # Use the content as a snippet
                 )
             )
-        
+
         return answer_candidates

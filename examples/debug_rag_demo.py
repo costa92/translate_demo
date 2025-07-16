@@ -1,5 +1,4 @@
-# RAG Pipeline Demonstration using OrchestratorAgent
-# This demonstrates the full RAG pipeline with simplified components.
+# Debug RAG Pipeline to check retrieval scores
 
 import asyncio
 import sys
@@ -7,10 +6,10 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from agents.knowledge_base.orchestrator_agent import OrchestratorAgent
 
-async def run_rag_demo():
-    """Demonstrates the full RAG pipeline using OrchestratorAgent."""
+async def debug_rag_demo():
+    """Debug the RAG pipeline to check retrieval scores."""
     print("==================================================================")
-    print("    RAG Pipeline Demonstration")
+    print("    Debug RAG Pipeline")
     print("====================================================================\n")
 
     llm_config = {
@@ -55,6 +54,10 @@ async def run_rag_demo():
     print(f"Query: {query}")
     print(f"Answer: {query_result['answer']}")
     print(f"Retrieved sources: {len(query_result['retrieved_sources'])}")
+    
+    # Debug: Show retrieved sources with scores
+    for i, source in enumerate(query_result['retrieved_sources']):
+        print(f"  Source {i+1}: {source['content']} (Score: {source['relevance_score']:.3f})")
 
     # --- 4. Test another query ---
     print("\n--- Step 3: Testing another query ---")
@@ -73,9 +76,12 @@ async def run_rag_demo():
     print(f"Query: {query2}")
     print(f"Answer: {query_result2['answer']}")
     print(f"Retrieved sources: {len(query_result2['retrieved_sources'])}")
+    
+    # Debug: Show retrieved sources with scores
+    for i, source in enumerate(query_result2['retrieved_sources']):
+        print(f"  Source {i+1}: {source['content']} (Score: {source['relevance_score']:.3f})")
 
-    print("\n--- Demo Finished ---")
+    print("\n--- Debug Finished ---")
 
 if __name__ == "__main__":
-    asyncio.run(run_rag_demo())
-
+    asyncio.run(debug_rag_demo())

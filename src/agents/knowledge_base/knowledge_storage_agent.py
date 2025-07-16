@@ -15,8 +15,11 @@ class KnowledgeStorageAgent:
     operations to a specific provider (strategy) chosen at initialization.
     """
 
-    def __init__(self, provider_type: str = 'memory', provider_config: Dict[str, Any] = None):
-        self.provider = self._create_provider(provider_type, provider_config)
+    def __init__(self, provider_type: str = 'memory', provider_config: Dict[str, Any] = None, custom_provider: BaseStorageProvider = None):
+        if custom_provider:
+            self.provider = custom_provider
+        else:
+            self.provider = self._create_provider(provider_type, provider_config)
 
     def _create_provider(self, provider_type: str, config: Dict[str, Any]) -> BaseStorageProvider:
         """Factory method to create a storage provider instance."""
