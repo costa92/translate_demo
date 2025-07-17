@@ -1,0 +1,209 @@
+{
+  "timestamp": 1752726301.4888089,
+  "complex_queries": [
+    {
+      "query": "Python装饰器和生成器的区别是什么？",
+      "type": "comparison",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.9623677392169124,
+      "time": 0.0003974437713623047,
+      "source_count": 5
+    },
+    {
+      "query": "How does quantum entanglement relate to quantum computing algorithms?",
+      "type": "relationship",
+      "difficulty": "hard",
+      "quality_score": 1.0,
+      "confidence": 0.9999999999999999,
+      "time": 0.0001876354217529297,
+      "source_count": 5
+    },
+    {
+      "query": "AI伦理在区块链应用中的考虑因素",
+      "type": "cross_domain",
+      "difficulty": "hard",
+      "quality_score": 1.0,
+      "confidence": 0.8335370913415863,
+      "time": 0.00022673606872558594,
+      "source_count": 5
+    },
+    {
+      "query": "量子计算对网络安全的影响",
+      "type": "cross_domain",
+      "difficulty": "hard",
+      "quality_score": 1.0,
+      "confidence": 0.9225934895411777,
+      "time": 0.0002033710479736328,
+      "source_count": 5
+    },
+    {
+      "query": "Shor算法如何威胁现有的加密系统？",
+      "type": "technical_deep",
+      "difficulty": "expert",
+      "quality_score": 1.0,
+      "confidence": 0.9999999999999999,
+      "time": 0.00017714500427246094,
+      "source_count": 5
+    },
+    {
+      "query": "零信任架构如何防御APT攻击？",
+      "type": "technical_deep",
+      "difficulty": "expert",
+      "quality_score": 1.0,
+      "confidence": 0.8708413398370413,
+      "time": 0.00019621849060058594,
+      "source_count": 5
+    },
+    {
+      "query": "未来5年网络安全的主要挑战",
+      "type": "trend_analysis",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.8475151804831261,
+      "time": 0.00019431114196777344,
+      "source_count": 5
+    },
+    {
+      "query": "量子计算商业化的时间表和障碍",
+      "type": "trend_analysis",
+      "difficulty": "hard",
+      "quality_score": 1.0,
+      "confidence": 0.8537721598902873,
+      "time": 0.00019407272338867188,
+      "source_count": 5
+    },
+    {
+      "query": "如何解决AI算法中的偏见问题？",
+      "type": "solution",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.9999999999999999,
+      "time": 0.0001804828643798828,
+      "source_count": 5
+    },
+    {
+      "query": "区块链可扩展性问题的解决方案",
+      "type": "solution",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.9181129301252847,
+      "time": 0.00019431114196777344,
+      "source_count": 5
+    },
+    {
+      "query": "PoW vs PoS共识机制的优缺点",
+      "type": "comparison",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.8560864223303468,
+      "time": 0.0001952648162841797,
+      "source_count": 5
+    },
+    {
+      "query": "传统计算与量子计算的根本差异",
+      "type": "comparison",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.8168887861596392,
+      "time": 0.0001933574676513672,
+      "source_count": 5
+    },
+    {
+      "query": "智能合约在供应链管理中的具体应用",
+      "type": "application",
+      "difficulty": "medium",
+      "quality_score": 1.0,
+      "confidence": 0.8724506673791903,
+      "time": 0.00019502639770507812,
+      "source_count": 5
+    },
+    {
+      "query": "Python元类在实际项目中的使用场景",
+      "type": "application",
+      "difficulty": "hard",
+      "quality_score": 1.0,
+      "confidence": 0.9623677392169124,
+      "time": 0.00017023086547851562,
+      "source_count": 5
+    },
+    {
+      "query": "如何在保护隐私的同时实现AI系统的透明度？",
+      "type": "paradox",
+      "difficulty": "expert",
+      "quality_score": 0.9528947636260243,
+      "confidence": 0.7528947636260244,
+      "time": 0.00019407272338867188,
+      "source_count": 5
+    },
+    {
+      "query": "量子计算机如何同时利用叠加态和纠缠态？",
+      "type": "technical_complex",
+      "difficulty": "expert",
+      "quality_score": 0.9521416923830838,
+      "confidence": 0.7521416923830838,
+      "time": 0.00019121170043945312,
+      "source_count": 5
+    }
+  ],
+  "edge_cases": [
+    {
+      "query": "",
+      "expected": "validation_error",
+      "status": "error",
+      "confidence": 0.0
+    },
+    {
+      "query": "a",
+      "expected": "low_confidence",
+      "status": "handled",
+      "confidence": 0.8875046709975618
+    },
+    {
+      "query": "xyz123不存在的概念",
+      "expected": "no_match",
+      "status": "handled",
+      "confidence": 0.8923233895115246
+    },
+    {
+      "query": "Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python ",
+      "expected": "handle_repetition",
+      "status": "handled",
+      "confidence": 0.9623677392169124
+    },
+    {
+      "query": "非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询非常非常非常长的查询",
+      "expected": "handle_long_query",
+      "status": "handled",
+      "confidence": 0.8484177139745359
+    },
+    {
+      "query": "🤖🔬💻🚀",
+      "expected": "handle_emoji",
+      "status": "handled",
+      "confidence": 0.9368642495261659
+    },
+    {
+      "query": "SELECT * FROM users WHERE id=1; DROP TABLE users;",
+      "expected": "handle_injection",
+      "status": "handled",
+      "confidence": 0.7947950319834773
+    }
+  ],
+  "difficulty_stats": {
+    "medium": 7,
+    "hard": 5,
+    "expert": 4
+  },
+  "type_stats": {
+    "comparison": 3,
+    "relationship": 1,
+    "cross_domain": 2,
+    "technical_deep": 2,
+    "trend_analysis": 2,
+    "solution": 2,
+    "application": 2,
+    "paradox": 1,
+    "technical_complex": 1
+  }
+}

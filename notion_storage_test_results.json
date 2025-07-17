@@ -1,0 +1,14 @@
+{
+  "storage_tests": {
+    "provider": "notion",
+    "skipped": true,
+    "reason": "Missing NOTION_API_KEY or NOTION_DATABASE_ID environment variables",
+    "note": "Set these environment variables to test Notion storage"
+  },
+  "integration_tests": {
+    "test": "notion_integration",
+    "skipped": true,
+    "reason": "Missing environment variables"
+  },
+  "timestamp": "2025-07-17T13:13:09.178536"
+}

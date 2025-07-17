@@ -6,7 +6,7 @@ classifiers = [
 ]
 description = "My Awesome Project!"
 license = "MIT"
-name = "translate_demo"
+name = "unified_knowledge_base"
 readme = "README.md"
 version = "0.1.0"
 
@@ -15,6 +15,7 @@ packages = [
   {include = "tools", from = "src"},
   {include = "agents", from = "src"},
   {include = "translate_demo", from = "src"},
+  {include = "knowledge_base", from = "src"},
 ]
 
 [tool.poetry.dependencies]
@@ -42,6 +43,11 @@ google-api-python-client = "^2.176.0"
 google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.2"
 google-cloud-storage = "^3.2.0"
+sentence-transformers = "^2.2.2"
+chromadb = "^0.4.22"
+notion-client = "^2.2.1"
+pydantic = "^2.5.2"
+tenacity = "^8.2.3"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
