@@ -13,10 +13,11 @@ The Unified Knowledge Base System aims to integrate two existing knowledge base 
 #### Acceptance Criteria
 
 1. WHEN examining the codebase THEN the system SHALL have a single, well-organized directory structure under `src/knowledge_base/`.
-2. WHEN adding new functionality THEN the system SHALL provide clear extension points without requiring code duplication.
-3. WHEN reviewing the code THEN there SHALL be no redundant implementations of the same functionality.
-4. WHEN importing modules THEN the system SHALL provide a consistent import structure and naming convention.
-5. WHEN configuring the system THEN there SHALL be a unified configuration mechanism that works across all components.
+2. WHEN implementing any task from the implementation plan THEN all generated code SHALL be placed in the `src/knowledge_base` directory.
+3. WHEN adding new functionality THEN the system SHALL provide clear extension points without requiring code duplication.
+4. WHEN reviewing the code THEN there SHALL be no redundant implementations of the same functionality.
+5. WHEN importing modules THEN the system SHALL provide a consistent import structure and naming convention.
+6. WHEN configuring the system THEN there SHALL be a unified configuration mechanism that works across all components.
 
 ### Requirement 2
 

@@ -803,3 +803,7 @@ The Unified Knowledge Base System design provides a comprehensive framework for 
 The implementation plan outlines a phased approach that will deliver value incrementally while managing project risks. Each phase builds on the previous one, ensuring that the system remains functional throughout the development process.
 
 With this design, the Unified Knowledge Base System will provide a powerful platform for knowledge management, retrieval, and generation, meeting all the requirements outlined in the requirements document.
+
+## code path
+
+src/knowledge_base

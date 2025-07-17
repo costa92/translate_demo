@@ -81,14 +81,14 @@
 
 - [ ] 8. Implement Notion storage provider
 
-  - [ ] 8.1 Create NotionVectorStore class
+  - [x] 8.1 Create NotionVectorStore class
 
     - Implement Notion API integration
     - Create database schema management
     - Add batch operations support
     - _Requirements: 3.2_
 
-  - [ ] 8.2 Optimize Notion API usage
+  - [x] 8.2 Optimize Notion API usage
     - Implement connection pooling
     - Add caching mechanisms
     - Create retry logic
