@@ -383,8 +383,9 @@ class NotionVectorStore(BaseVectorStore):
                 provider="notion"
             )
         
-        return response.json()    @
-retry_with_backoff()
+        return response.json()
+        
+    @retry_with_backoff()
     async def get_document(self, document_id: str) -> Optional[Document]:
         """Get a document by ID."""
         if not self._initialized:
