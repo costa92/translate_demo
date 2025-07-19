@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from src.knowledge_base.core.config import Config
 from src.knowledge_base.agents.orchestrator import OrchestratorAgent
 
-from ..server import get_config, get_orchestrator
+from ..dependencies import get_config, get_orchestrator
 
 router = APIRouter(prefix="/admin", tags=["Administration"])
 

@@ -12,7 +12,7 @@ from src.knowledge_base.core.config import Config
 from src.knowledge_base.core.monitoring import get_monitoring_system, MonitoringSystem
 from src.knowledge_base.agents.orchestrator import OrchestratorAgent
 
-from ..server import get_config, get_orchestrator
+from ..dependencies import get_config, get_orchestrator, get_monitoring
 
 router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-Minimal API server for the unified knowledge base system.
+Standalone API server for the Unified Knowledge Base System.
 
-This example demonstrates how to start a minimal API server without dependencies on the agent system.
+This example demonstrates how to create a simple API server
+without depending on the full API server implementation.
 """
 
 import sys
@@ -26,7 +27,7 @@ kb = KnowledgeBase()
 # Create FastAPI app
 app = FastAPI(
     title="Knowledge Base API",
-    description="Minimal API for the Unified Knowledge Base System",
+    description="Simple API for the Unified Knowledge Base System",
     version="1.0.0",
 )
 
@@ -119,8 +120,8 @@ async def health_check():
 
 
 def main():
-    """Run the minimal API server."""
-    print("Starting minimal API server...")
+    """Run the standalone API server."""
+    print("Starting standalone API server...")
     print("API documentation will be available at http://localhost:8000/docs")
     
     uvicorn.run(

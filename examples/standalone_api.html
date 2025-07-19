@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base API Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .result h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .sources {
+            margin-top: 15px;
+        }
+        .source-item {
+            background-color: #fff;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Knowledge Base API Demo</h1>
+    
+    <div class="container">
+        <h2>Add Document</h2>
+        <textarea id="document-content" placeholder="Enter document content...">
+# Unified Knowledge Base System
+
+The Unified Knowledge Base System is a comprehensive knowledge management solution
+that combines document storage, processing, retrieval, and generation capabilities
+in a cohesive platform. It supports multiple storage backends, flexible document
+processing, advanced retrieval, and high-quality generation.
+
+## Key Features
+
+- Multiple storage backends (in-memory, Notion, vector databases)
+- Flexible document processing with various chunking strategies
+- Advanced retrieval with semantic, keyword, and hybrid search
+- High-quality generation with multiple LLM providers
+- Multi-agent architecture for specialized knowledge tasks</textarea>
+        <input type="text" id="document-metadata" placeholder="Metadata (JSON format)" value='{"title": "System Overview", "source": "documentation"}'>
+        <button id="add-document-button">Add Document</button>
+        <button id="clear-kb-button">Clear Knowledge Base</button>
+        
+        <div class="loading" id="add-loading">
+            <div class="spinner"></div>
+            <p>Adding document...</p>
+        </div>
+        
+        <div class="result" id="add-result" style="display: none;">
+            <h3>Document Added</h3>
+            <div id="add-result-content"></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>Query Knowledge Base</h2>
+        <input type="text" id="query-input" placeholder="Enter your query..." value="What are the key features of the system?">
+        <input type="text" id="query-metadata" placeholder="Metadata filter (JSON format)" value='{"source": "documentation"}'>
+        <button id="query-button">Query</button>
+        
+        <div class="loading" id="query-loading">
+            <div class="spinner"></div>
+            <p>Processing query...</p>
+        </div>
+        
+        <div class="result" id="query-result" style="display: none;">
+            <h3>Answer</h3>
+            <div id="query-answer"></div>
+            
+            <div class="sources">
+                <h3>Sources</h3>
+                <div id="sources-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        document.getElementById('add-document-button').addEventListener('click', async function() {
+            const content = document.getElementById('document-content').value.trim();
+            if (!content) {
+                alert('Please enter document content');
+                return;
+            }
+            
+            let metadata = {};
+            try {
+                const metadataText = document.getElementById('document-metadata').value.trim();
+                if (metadataText) {
+                    metadata = JSON.parse(metadataText);
+                }
+            } catch (error) {
+                alert('Invalid metadata JSON format');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('add-loading').style.display = 'block';
+            document.getElementById('add-result').style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_URL}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        metadata: metadata
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Show result
+                document.getElementById('add-result-content').innerHTML = `
+                    <p><strong>Document ID:</strong> ${data.document_id}</p>
+                    <p><strong>Chunk Count:</strong> ${data.chunk_count}</p>
+                    <p><strong>Success:</strong> ${data.success}</p>
+                `;
+                document.getElementById('add-result').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to add document: ${error.message}`);
+            } finally {
+                document.getElementById('add-loading').style.display = 'none';
+            }
+        });
+        
+        document.getElementById('query-button').addEventListener('click', async function() {
+            const query = document.getElementById('query-input').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+            
+            let metadata_filter = null;
+            try {
+                const metadataText = document.getElementById('query-metadata').value.trim();
+                if (metadataText) {
+                    metadata_filter = JSON.parse(metadataText);
+                }
+            } catch (error) {
+                alert('Invalid metadata filter JSON format');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('query-loading').style.display = 'block';
+            document.getElementById('query-result').style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        metadata_filter: metadata_filter
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Show result
+                document.getElementById('query-answer').textContent = data.answer;
+                
+                const sourcesList = document.getElementById('sources-list');
+                sourcesList.innerHTML = '';
+                
+                if (data.sources && data.sources.length > 0) {
+                    data.sources.forEach((source, index) => {
+                        const sourceItem = document.createElement('div');
+                        sourceItem.className = 'source-item';
+                        
+                        const sourceText = document.createElement('p');
+                        sourceText.textContent = source.text;
+                        
+                        const sourceMetadata = document.createElement('p');
+                        sourceMetadata.style.fontSize = '0.9em';
+                        sourceMetadata.style.color = '#666';
+                        sourceMetadata.textContent = `Metadata: ${JSON.stringify(source.metadata)}`;
+                        
+                        sourceItem.appendChild(sourceText);
+                        sourceItem.appendChild(sourceMetadata);
+                        sourcesList.appendChild(sourceItem);
+                    });
+                } else {
+                    sourcesList.innerHTML = '<p>No sources available</p>';
+                }
+                
+                document.getElementById('query-result').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to query knowledge base: ${error.message}`);
+            } finally {
+                document.getElementById('query-loading').style.display = 'none';
+            }
+        });
+        
+        document.getElementById('clear-kb-button').addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to clear the knowledge base?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/documents`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                alert('Knowledge base cleared successfully');
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to clear knowledge base: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html>

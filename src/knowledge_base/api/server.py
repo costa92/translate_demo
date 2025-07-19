@@ -15,81 +15,24 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
 from src.knowledge_base.core.logging_config import configure_logging
-
 from src.knowledge_base.core.config import Config
 from src.knowledge_base.core.exceptions import KnowledgeBaseError
-from src.knowledge_base.core.monitoring import get_monitoring_system, MonitoringSystem
-from src.knowledge_base.agents.orchestrator import OrchestratorAgent
+
+# Import dependencies
+from .dependencies import (
+    initialize_dependencies,
+    get_config,
+    get_orchestrator,
+    get_websocket_manager,
+    get_monitoring
+)
 
 # Import middleware
 from .middleware.logging import LoggingMiddleware
 from .middleware.auth import AuthMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
 
-# Import WebSocket handler
-from .websocket.handler import WebSocketManager
-
-# Import routes as they are implemented
-from .routes.knowledge import router as knowledge_router
-from .routes.query import router as query_router
-from .routes.admin import router as admin_router
-from .routes.users import router as users_router
-from .routes.monitoring import router as monitoring_router
-
 logger = logging.getLogger(__name__)
-
-# Global variables for dependency injection
-_config: Optional[Config] = None
-_orchestrator: Optional[OrchestratorAgent] = None
-_websocket_manager: Optional[WebSocketManager] = None
-_monitoring_system: Optional[MonitoringSystem] = None
-
-
-def get_config() -> Config:
-    """Get the configuration instance.
-    
-    Returns:
-        The configuration instance.
-    """
-    if _config is None:
-        raise RuntimeError("Configuration not initialized")
-    return _config
-
-
-def get_orchestrator() -> OrchestratorAgent:
-    """Get the orchestrator agent instance.
-    
-    Returns:
-        The orchestrator agent instance.
-    """
-    if _orchestrator is None:
-        raise RuntimeError("Orchestrator agent not initialized")
-    return _orchestrator
-
-
-def get_websocket_manager() -> WebSocketManager:
-    """Get the WebSocket manager instance.
-    
-    Returns:
-        The WebSocket manager instance.
-    """
-    if _websocket_manager is None:
-        raise RuntimeError("WebSocket manager not initialized")
-    return _websocket_manager
-
-
-def get_monitoring() -> MonitoringSystem:
-    """Get the monitoring system instance.
-    
-    Returns:
-        The monitoring system instance.
-    """
-    global _monitoring_system
-    
-    if _monitoring_system is None:
-        _monitoring_system = get_monitoring_system(_config)
-    
-    return _monitoring_system
 
 
 async def exception_handler(request: Request, exc: KnowledgeBaseError) -> JSONResponse:
@@ -138,10 +81,8 @@ def create_app(config: Config) -> FastAPI:
     Returns:
         A FastAPI application.
     """
-    global _config, _orchestrator, _websocket_manager
-    
-    # Store config for dependency injection
-    _config = config
+    # Initialize dependencies
+    initialize_dependencies(config)
     
     # Create FastAPI app
     app = FastAPI(
@@ -210,15 +151,14 @@ def create_app(config: Config) -> FastAPI:
     # Add exception handlers
     app.add_exception_handler(KnowledgeBaseError, exception_handler)
     
-    # Initialize orchestrator agent
-    _orchestrator = OrchestratorAgent(config)
+    # Dependencies are already initialized
     
-    # Initialize WebSocket manager
-    _websocket_manager = WebSocketManager(config, _orchestrator)
-    
-    # Initialize monitoring system
-    global _monitoring_system
-    _monitoring_system = get_monitoring_system(config)
+    # Import routes after dependencies are initialized
+    from .routes.knowledge import router as knowledge_router
+    from .routes.query import router as query_router
+    from .routes.admin import router as admin_router
+    from .routes.users import router as users_router
+    from .routes.monitoring import router as monitoring_router
     
     # Configure logging
     configure_logging(config)
@@ -353,16 +293,19 @@ def create_app(config: Config) -> FastAPI:
     async def startup_event():
         """Initialize components on startup."""
         logger.info("Starting Knowledge Base API server")
-        await _orchestrator.start()
+        orchestrator = get_orchestrator()
+        await orchestrator.start()
     
     @app.on_event("shutdown")
     async def shutdown_event():
         """Clean up resources on shutdown."""
         logger.info("Shutting down Knowledge Base API server")
         # Cancel WebSocket notification task if running
-        if _websocket_manager and hasattr(_websocket_manager, "notification_task") and _websocket_manager.notification_task:
-            _websocket_manager.notification_task.cancel()
-        await _orchestrator.stop()
+        websocket_manager = get_websocket_manager()
+        if websocket_manager and hasattr(websocket_manager, "notification_task") and websocket_manager.notification_task:
+            websocket_manager.notification_task.cancel()
+        orchestrator = get_orchestrator()
+        await orchestrator.stop()
     
     # Add health check endpoint
     @app.get("/health", tags=["Health"])

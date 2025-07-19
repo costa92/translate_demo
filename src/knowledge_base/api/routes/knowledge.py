@@ -16,14 +16,7 @@ from src.knowledge_base.core.types import DocumentType
 # Import dependencies from server module at runtime to avoid circular imports
 from fastapi import Depends
 
-# Define dependency functions that will be imported from server at runtime
-def get_config():
-    from ..server import get_config as server_get_config
-    return server_get_config()
-
-def get_orchestrator():
-    from ..server import get_orchestrator as server_get_orchestrator
-    return server_get_orchestrator()
+from ..dependencies import get_config, get_orchestrator
 
 router = APIRouter(prefix="/knowledge", tags=["Knowledge Management"])
 

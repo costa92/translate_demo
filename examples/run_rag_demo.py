@@ -1,5 +1,9 @@
-# RAG Pipeline Demonstration using OrchestratorAgent
-# This demonstrates the full RAG pipeline with simplified components.
+#!/usr/bin/env python
+"""
+RAG Pipeline Demonstration using OrchestratorAgent.
+
+This demonstrates the full RAG pipeline with simplified components.
+"""
 
 import asyncio
 import sys

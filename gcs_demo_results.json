@@ -1,0 +1,7 @@
+{
+  "query": "What are the key features of Google Cloud Storage?",
+  "answer": "The key features of the Unified Knowledge Base System include multiple storage backends, flexible document processing, advanced retrieval with semantic and keyword search, high-quality generation with multiple LLM providers, and a multi-agent architecture.",
+  "sources": [
+    "\n        # Google Cloud Storage\n        \n        Google Cloud Storage is a RESTful online file storage web service for storing and accessing data on\n        Google Cloud Platform infrastructure. The service combines the performance and scalability of Google's\n        cloud with advanced security and sharing capabilities.\n        \n        ## Key Features\n        \n        - Object storage with high durability and availability\n        - Multiple storage classes for different use cases\n        - Strong consistency\n        - Integrated with Google Cloud IAM\n        - Lifecycle management policies\n        - Object versioning and retention policies\n        "
+  ]
+}

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+"""
 Example script for using the GCSStorageProvider with Application Default Credentials (ADC).
 
 This script demonstrates the recommended way to connect to GCS for local development.
@@ -8,12 +10,53 @@ Before running this script, you MUST:
     b. Run `gcloud auth application-default login`.
     c. Create a GCS bucket and grant your user account the "Storage Object Admin" role.
 2.  Update the `bucket_name` in the configuration below.
+"""
 
+import os
+import sys
 
+# Add project root to Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-
-from agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
-from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+try:
+    # Try to import from src
+    from src.knowledge_base.storage.providers.gcs import GCSStorageProvider
+    from src.knowledge_base.core.types import TextChunk as ProcessedKnowledgeChunk
+    
+    # Simple wrapper to mimic the KnowledgeStorageAgent interface
+    class KnowledgeStorageAgent:
+        def __init__(self, provider_type, provider_config):
+            if provider_type == 'gcs':
+                self.provider = GCSStorageProvider(provider_config)
+            else:
+                raise ValueError(f"Unsupported provider type: {provider_type}")
+        
+        def store(self, chunks):
+            try:
+                for chunk in chunks:
+                    self.provider.store(chunk)
+                return True
+            except Exception as e:
+                print(f"Error storing chunks: {e}")
+                return False
+        
+        def retrieve(self, query_vector, top_k, filters):
+            try:
+                return self.provider.search(query_vector, top_k, filters)
+            except Exception as e:
+                print(f"Error retrieving chunks: {e}")
+                return []
+except ImportError:
+    # Fall back to original imports
+    try:
+        from agents.knowledge_base.knowledge_storage_agent import KnowledgeStorageAgent
+        from agents.knowledge_base.knowledge_processing_agent import ProcessedKnowledgeChunk
+    except ImportError:
+        print("Error: Required modules not found. This example requires either:")
+        print("  1. The src.knowledge_base.storage.providers.gcs module, or")
+        print("  2. The agents.knowledge_base.knowledge_storage_agent module")
+        print("Please ensure you have the correct dependencies installed.")
+        sys.exit(1)
 
 def run_gcs_adc_demo():
     """Initializes the agent and runs a simple store/retrieve workflow with GCS using ADC."""

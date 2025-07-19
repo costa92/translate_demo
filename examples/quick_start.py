@@ -6,15 +6,17 @@ This example demonstrates how to initialize the knowledge base,
 add documents, and query the knowledge base.
 """
 
-from src.knowledge_base import KnowledgeBase
-from src.knowledge_base.core.config import Config
+import sys
+import os
+
+
+from knowledge_base import KnowledgeBase
 
 
 def main():
     """Run the quick start example."""
-    # Initialize the knowledge base with default configuration
-    config = Config()
-    kb = KnowledgeBase(config)
+    # Initialize the knowledge base
+    kb = KnowledgeBase()
     
     print("Unified Knowledge Base System - Quick Start Example")
     print("==================================================")

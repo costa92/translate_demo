@@ -17,7 +17,7 @@ from src.knowledge_base.api.models.auth import (
     User, APIKey, Role, Permission,
     UserCreate, UserUpdate, APIKeyCreate, APIKeyResponse, UserResponse
 )
-from src.knowledge_base.api.server import get_config
+from ..dependencies import get_config
 
 router = APIRouter(prefix="/admin", tags=["User Management"])
 

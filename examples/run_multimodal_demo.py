@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+"""
+Multimodal Data Processing Demo.
+
+This script demonstrates processing and storing multimodal data (text and images).
+"""
+
 import asyncio
 import sys
 import os
