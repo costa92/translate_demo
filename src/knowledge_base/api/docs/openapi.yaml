@@ -1,0 +1,1892 @@
+openapi: 3.0.3
+info:
+  title: Unified Knowledge Base System API
+  description: |
+    # Unified Knowledge Base System API
+    
+    This API provides access to the Unified Knowledge Base System, allowing you to:
+    
+    - Add, update, and retrieve documents
+    - Query the knowledge base with natural language
+    - Manage users and API keys
+    - Monitor system health and performance
+    - Perform administrative tasks
+    
+    ## Authentication
+    
+    Most endpoints require authentication using either:
+    - API key (via `X-API-Key` header)
+    - Bearer token (via `Authorization` header)
+    
+    ## WebSocket Support
+    
+    Real-time communication is available through WebSocket at `/ws/{client_id}`.
+    
+    ## Rate Limiting
+    
+    API requests are subject to rate limiting based on your account tier.
+  version: 1.0.0
+  termsOfService: https://example.com/terms/
+  contact:
+    name: API Support
+    url: https://example.com/support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Knowledge Management
+    description: Endpoints for managing documents in the knowledge base
+  - name: Query
+    description: Endpoints for querying the knowledge base
+  - name: Administration
+    description: Endpoints for system administration
+  - name: User Management
+    description: Endpoints for managing users and API keys
+  - name: Health
+    description: Health check endpoints
+  - name: WebSocket
+    description: WebSocket endpoints for real-time communication
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is up and running
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+      security: []  # No authentication required
+
+  /knowledge/documents:
+    post:
+      summary: Add a document
+      description: Add a new document to the knowledge base
+      operationId: addDocument
+      tags:
+        - Knowledge Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentModel'
+            examples:
+              textDocument:
+                summary: Text document
+                value:
+                  content: "This is a sample document content."
+                  type: "text"
+                  metadata:
+                    source: "user-upload"
+                    author: "John Doe"
+                    tags: ["sample", "documentation"]
+      responses:
+        '200':
+          description: Document added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddDocumentResponse'
+        '400':
+          description: Invalid document format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    get:
+      summary: List documents
+      description: List documents in the knowledge base
+      operationId: listDocuments
+      tags:
+        - Knowledge Management
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of documents to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          description: Number of documents to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: filter
+          in: query
+          description: Filter expression
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentModel'
+                  total:
+                    type: integer
+                    description: Total number of documents matching the filter
+                  limit:
+                    type: integer
+                    description: Maximum number of documents returned
+                  offset:
+                    type: integer
+                    description: Number of documents skipped
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /knowledge/documents/{document_id}:
+    get:
+      summary: Get a document
+      description: Get a document from the knowledge base
+      operationId: getDocument
+      tags:
+        - Knowledge Management
+      parameters:
+        - name: document_id
+          in: path
+          description: Document ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentModel'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      summary: Update a document
+      description: Update a document in the knowledge base
+      operationId: updateDocument
+      tags:
+        - Knowledge Management
+      parameters:
+        - name: document_id
+          in: path
+          description: Document ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentModel'
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: string
+                  success:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete a document
+      description: Delete a document from the knowledge base
+      operationId: deleteDocument
+      tags:
+        - Knowledge Management
+      parameters:
+        - name: document_id
+          in: path
+          description: Document ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: string
+                  success:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      summary: Partially update a document
+      description: Partially update a document in the knowledge base
+      operationId: patchDocument
+      tags:
+        - Knowledge Management
+      parameters:
+        - name: document_id
+          in: path
+          description: Document ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Document patched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: string
+                  success:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /knowledge/documents/bulk:
+    post:
+      summary: Add multiple documents
+      description: Add multiple documents to the knowledge base in a single request
+      operationId: bulkAddDocuments
+      tags:
+        - Knowledge Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDocumentRequest'
+      responses:
+        '200':
+          description: Documents added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDocumentResponse'
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete multiple documents
+      description: Delete multiple documents from the knowledge base in a single request
+      operationId: bulkDeleteDocuments
+      tags:
+        - Knowledge Management
+      parameters:
+        - name: document_ids
+          in: query
+          description: List of document IDs to delete
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Documents deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success_count:
+                    type: integer
+                  error_count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        document_id:
+                          type: string
+                        success:
+                          type: boolean
+                        error:
+                          type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /query:
+    post:
+      summary: Query the knowledge base
+      description: Query the knowledge base with natural language
+      operationId: queryKnowledgeBase
+      tags:
+        - Query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryModel'
+            examples:
+              basicQuery:
+                summary: Basic query
+                value:
+                  query: "What is the capital of France?"
+                  top_k: 5
+              streamingQuery:
+                summary: Streaming query
+                value:
+                  query: "What is the capital of France?"
+                  stream: true
+      responses:
+        '200':
+          description: Query response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponseModel'
+            text/event-stream:
+              schema:
+                type: string
+                description: Streaming response for queries with stream=true
+        '400':
+          description: Invalid query format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /query/batch:
+    post:
+      summary: Batch query
+      description: Perform multiple queries in a single request
+      operationId: batchQuery
+      tags:
+        - Query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                queries:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QueryModel'
+              required:
+                - queries
+      responses:
+        '200':
+          description: Batch query ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch_id:
+                    type: string
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /query/batch/{batch_id}:
+    get:
+      summary: Get batch query results
+      description: Get the results of a batch query
+      operationId: getBatchResults
+      tags:
+        - Query
+      parameters:
+        - name: batch_id
+          in: path
+          description: Batch query ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch query results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [pending, completed, failed]
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QueryResponseModel'
+                  error:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Batch query not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /query/similarity:
+    post:
+      summary: Similarity search
+      description: Find chunks similar to the provided text
+      operationId: similaritySearch
+      tags:
+        - Query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimilaritySearchRequest'
+      responses:
+        '200':
+          description: Similar chunks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChunkModel'
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /query/filtered:
+    post:
+      summary: Filtered query
+      description: Query the knowledge base with advanced filtering
+      operationId: filteredQuery
+      tags:
+        - Query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FilteredQueryRequest'
+      responses:
+        '200':
+          description: Query response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponseModel'
+        '400':
+          description: Invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /query/suggest:
+    get:
+      summary: Query suggestions
+      description: Get query suggestions based on a prefix
+      operationId: suggestQueries
+      tags:
+        - Query
+      parameters:
+        - name: prefix
+          in: query
+          description: Query prefix to get suggestions for
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of suggestions
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+      responses:
+        '200':
+          description: Query suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/health:
+    get:
+      summary: Health check
+      description: Check the health of system components
+      operationId: healthCheck
+      tags:
+        - Administration
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  orchestrator:
+                    type: string
+                  agents:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  version:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/status:
+    get:
+      summary: System status
+      description: Get detailed system status
+      operationId: systemStatus
+      tags:
+        - Administration
+      responses:
+        '200':
+          description: System status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/maintenance:
+    post:
+      summary: Run maintenance
+      description: Run maintenance tasks
+      operationId: runMaintenance
+      tags:
+        - Administration
+      parameters:
+        - name: maintenance_type
+          in: query
+          description: Type of maintenance to run
+          schema:
+            type: string
+            default: full
+      responses:
+        '200':
+          description: Maintenance task ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/maintenance/{task_id}:
+    get:
+      summary: Get maintenance status
+      description: Get the status of a maintenance task
+      operationId: getMaintenanceStatus
+      tags:
+        - Administration
+      parameters:
+        - name: task_id
+          in: path
+          description: Maintenance task ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Maintenance task status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [pending, running, completed, failed]
+                  progress:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 100
+                  message:
+                    type: string
+                  error:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Maintenance task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/config:
+    get:
+      summary: Get configuration
+      description: Get system configuration
+      operationId: getConfiguration
+      tags:
+        - Administration
+      responses:
+        '200':
+          description: System configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      summary: Update configuration
+      description: Update system configuration
+      operationId: updateConfiguration
+      tags:
+        - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigUpdateRequest'
+      responses:
+        '200':
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  updated_config:
+                    type: object
+                    additionalProperties: true
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/metrics:
+    get:
+      summary: Get system metrics
+      description: Get system performance metrics
+      operationId: getSystemMetrics
+      tags:
+        - Administration
+      responses:
+        '200':
+          description: System metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/logs:
+    get:
+      summary: Get system logs
+      description: Get system logs
+      operationId: getSystemLogs
+      tags:
+        - Administration
+      parameters:
+        - name: level
+          in: query
+          description: Minimum log level
+          schema:
+            type: string
+            default: info
+        - name: limit
+          in: query
+          description: Maximum number of log entries
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: start_time
+          in: query
+          description: Start time for logs (ISO format)
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          description: End time for logs (ISO format)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: System logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        level:
+                          type: string
+                        message:
+                          type: string
+                        source:
+                          type: string
+                        details:
+                          type: object
+                          additionalProperties: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/backup:
+    post:
+      summary: Create backup
+      description: Create a system backup
+      operationId: createBackup
+      tags:
+        - Administration
+      responses:
+        '200':
+          description: Backup information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backup_id:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  size:
+                    type: integer
+                  status:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/restore:
+    post:
+      summary: Restore backup
+      description: Restore from a backup
+      operationId: restoreBackup
+      tags:
+        - Administration
+      parameters:
+        - name: backup_id
+          in: query
+          description: Backup ID to restore
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Restore operation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backup_id:
+                    type: string
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Backup not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/backups:
+    get:
+      summary: List backups
+      description: List available backups
+      operationId: listBackups
+      tags:
+        - Administration
+      responses:
+        '200':
+          description: List of available backups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backups:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        backup_id:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        size:
+                          type: integer
+                        status:
+                          type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/restart:
+    post:
+      summary: Restart system
+      description: Restart system components
+      operationId: restartSystem
+      tags:
+        - Administration
+      parameters:
+        - name: component
+          in: query
+          description: Component to restart (all, orchestrator, or agent name)
+          schema:
+            type: string
+            default: all
+      responses:
+        '200':
+          description: Restart operation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/users:
+    get:
+      summary: List users
+      description: List all users
+      operationId: listUsers
+      tags:
+        - User Management
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      summary: Create user
+      description: Create a new user
+      operationId: createUser
+      tags:
+        - User Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/users/{user_id}:
+    get:
+      summary: Get user
+      description: Get a user by ID
+      operationId: getUser
+      tags:
+        - User Management
+      parameters:
+        - name: user_id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      summary: Update user
+      description: Update a user
+      operationId: updateUser
+      tags:
+        - User Management
+      parameters:
+        - name: user_id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete user
+      description: Delete a user
+      operationId: deleteUser
+      tags:
+        - User Management
+      parameters:
+        - name: user_id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/api-keys:
+    get:
+      summary: List API keys
+      description: List API keys
+      operationId: listApiKeys
+      tags:
+        - User Management
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/APIKeyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      summary: Create API key
+      description: Create a new API key
+      operationId: createApiKey
+      tags:
+        - User Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/APIKeyCreate'
+      responses:
+        '200':
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyResponse'
+        '400':
+          description: Invalid API key data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/api-keys/{api_key_id}:
+    put:
+      summary: Update API key
+      description: Update an API key
+      operationId: updateApiKey
+      tags:
+        - User Management
+      parameters:
+        - name: api_key_id
+          in: path
+          description: API key ID
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: New API key name
+          schema:
+            type: string
+        - name: enabled
+          in: query
+          description: Whether the API key is enabled
+          schema:
+            type: boolean
+        - name: expires_in_days
+          in: query
+          description: Days until expiration
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: API key updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: API key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete API key
+      description: Delete an API key
+      operationId: deleteApiKey
+      tags:
+        - User Management
+      parameters:
+        - name: api_key_id
+          in: path
+          description: API key ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API key deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: API key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ws/{client_id}:
+    get:
+      summary: WebSocket endpoint
+      description: |
+        Connect to the WebSocket API for real-time communication.
+        
+        ## Message Format
+        
+        All messages follow this format:
+        
+        ```json
+        {
+          "request_id": "unique-request-id",
+          "request_type": "query",
+          "payload": {
+            // Request-specific payload
+          }
+        }
+        ```
+        
+        ## Available Operations
+        
+        - Query: `request_type: "query"`
+        - Subscribe: `request_type: "subscribe"`
+        - Unsubscribe: `request_type: "unsubscribe"`
+        
+        See the WebSocket documentation for more details.
+      operationId: websocketEndpoint
+      tags:
+        - WebSocket
+      parameters:
+        - name: client_id
+          in: path
+          description: Client identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  schemas:
+    DocumentModel:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Document ID (auto-generated if not provided)
+        content:
+          type: string
+          description: Document content
+        type:
+          type: string
+          description: Document type
+          default: text
+        metadata:
+          type: object
+          description: Document metadata
+          additionalProperties: true
+      required:
+        - content
+
+    AddDocumentResponse:
+      type: object
+      properties:
+        document_id:
+          type: string
+          description: Document ID
+        chunk_ids:
+          type: array
+          items:
+            type: string
+          description: Chunk IDs
+        success:
+          type: boolean
+          description: Success status
+        error:
+          type: string
+          description: Error message if any
+      required:
+        - document_id
+        - chunk_ids
+        - success
+
+    BulkDocumentRequest:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentModel'
+          description: List of documents
+      required:
+        - documents
+
+    BulkDocumentResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Operation results
+        success_count:
+          type: integer
+          description: Number of successful operations
+        error_count:
+          type: integer
+          description: Number of failed operations
+      required:
+        - results
+        - success_count
+        - error_count
+
+    QueryModel:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Query text
+        filter:
+          type: object
+          description: Filter criteria
+          additionalProperties: true
+        top_k:
+          type: integer
+          description: Number of results to return
+          minimum: 1
+          maximum: 100
+          default: 5
+        stream:
+          type: boolean
+          description: Whether to stream the response
+          default: false
+      required:
+        - query
+
+    ChunkModel:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Chunk ID
+        text:
+          type: string
+          description: Chunk text
+        document_id:
+          type: string
+          description: Document ID
+        metadata:
+          type: object
+          description: Chunk metadata
+          additionalProperties: true
+        score:
+          type: number
+          format: float
+          description: Relevance score
+      required:
+        - id
+        - text
+        - document_id
+
+    QueryResponseModel:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Original query
+        answer:
+          type: string
+          description: Generated answer
+        chunks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChunkModel'
+          description: Retrieved chunks
+        metadata:
+          type: object
+          description: Response metadata
+          additionalProperties: true
+      required:
+        - query
+        - answer
+        - chunks
+
+    SimilaritySearchRequest:
+      type: object
+      properties:
+        text:
+          type: string
+          description: Text to find similar chunks for
+        filter:
+          type: object
+          description: Filter criteria
+          additionalProperties: true
+        top_k:
+          type: integer
+          description: Number of results to return
+          minimum: 1
+          maximum: 100
+          default: 5
+      required:
+        - text
+
+    FilteredQueryRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Query text
+        metadata_filters:
+          type: object
+          description: Metadata filters
+          additionalProperties: true
+        content_filters:
+          type: array
+          items:
+            type: string
+          description: Content filters (keywords)
+        date_range:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+              description: Start date
+            end:
+              type: string
+              format: date
+              description: End date
+          description: Date range filter
+        top_k:
+          type: integer
+          description: Number of results to return
+          minimum: 1
+          maximum: 100
+          default: 5
+      required:
+        - query
+        - metadata_filters
+
+    ConfigUpdateRequest:
+      type: object
+      properties:
+        section:
+          type: string
+          description: Configuration section to update
+        key:
+          type: string
+          description: Configuration key to update
+        value:
+          description: New value for the configuration key
+      required:
+        - section
+        - key
+        - value
+
+    UserCreate:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          format: email
+          description: Email address
+        full_name:
+          type: string
+          description: Full name
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [reader, contributor, admin, system]
+          description: User roles
+          default: [reader]
+        custom_permissions:
+          type: array
+          items:
+            type: string
+          description: Custom permissions
+      required:
+        - username
+
+    UserUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address
+        full_name:
+          type: string
+          description: Full name
+        disabled:
+          type: boolean
+          description: Whether the user is disabled
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [reader, contributor, admin, system]
+          description: User roles
+        custom_permissions:
+          type: array
+          items:
+            type: string
+          description: Custom permissions
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User ID
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          format: email
+          description: Email address
+        full_name:
+          type: string
+          description: Full name
+        disabled:
+          type: boolean
+          description: Whether the user is disabled
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [reader, contributor, admin, system]
+          description: User roles
+        custom_permissions:
+          type: array
+          items:
+            type: string
+          description: Custom permissions
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - id
+        - username
+        - disabled
+        - roles
+        - custom_permissions
+        - created_at
+        - updated_at
+
+    APIKeyCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: API key name
+        user_id:
+          type: string
+          description: User ID
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+      required:
+        - name
+        - user_id
+
+    APIKeyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: API key ID
+        key:
+          type: string
+          description: API key value
+        name:
+          type: string
+          description: API key name
+        user_id:
+          type: string
+          description: User ID
+        enabled:
+          type: boolean
+          description: Whether the API key is enabled
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+      required:
+        - id
+        - key
+        - name
+        - user_id
+        - enabled
+        - created_at
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        error_type:
+          type: string
+          description: Error type
+        status_code:
+          type: integer
+          description: HTTP status code
+      required:
+        - error
+        - error_type
+        - status_code
+
+    WebSocketMessage:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique identifier for the request
+        request_type:
+          type: string
+          description: Type of request (query, subscribe, unsubscribe, etc.)
+        payload:
+          type: object
+          description: Request payload
+          additionalProperties: true
+      required:
+        - request_id
+        - request_type
+        - payload
+
+  responses:
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication
+    
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []

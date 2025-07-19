@@ -16,6 +16,7 @@ import logging
 import uuid
 import json
 from typing import List, Dict, Any, Optional, Tuple, Union, cast
+from collections import defaultdict
 
 from ...core.types import Document, TextChunk
 from ...core.exceptions import (
@@ -26,6 +27,13 @@ from ...core.exceptions import (
     MissingConfigurationError
 )
 from ..base import BaseVectorStore
+from .utils import (
+    generate_uuid,
+    document_to_metadata,
+    chunk_to_metadata,
+    metadata_to_document,
+    metadata_to_chunk
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +92,7 @@ class WeaviateVectorStore(BaseVectorStore):
         self._client = None
         
         # Document ID to chunk IDs mapping for efficient document deletion
-        self._document_chunks: Dict[str, List[str]] = {}
+        self._document_chunks: Dict[str, List[str]] = defaultdict(list)
         
         logger.info(f"WeaviateVectorStore initialized with URL: {self.url}")
     
@@ -124,6 +132,124 @@ class WeaviateVectorStore(BaseVectorStore):
             logger.error(f"Failed to initialize WeaviateVectorStore: {e}")
             raise StorageConnectionError("weaviate", str(e))
     
+    async def _create_schema(self) -> None:
+        """Create Weaviate schema if it doesn't exist."""
+        try:
+            # Check if classes exist
+            schema = self._client.schema.get()
+            existing_classes = [c["class"] for c in schema["classes"]] if "classes" in schema else []
+            
+            # Create Document class if it doesn't exist
+            if self.document_class not in existing_classes:
+                document_class = {
+                    "class": self.document_class,
+                    "description": "Document class for knowledge base",
+                    "properties": [
+                        {
+                            "name": "content",
+                            "dataType": ["text"],
+                            "description": "Document content"
+                        },
+                        {
+                            "name": "type",
+                            "dataType": ["string"],
+                            "description": "Entry type (document)"
+                        },
+                        {
+                            "name": "documentType",
+                            "dataType": ["string"],
+                            "description": "Document type"
+                        },
+                        {
+                            "name": "source",
+                            "dataType": ["string"],
+                            "description": "Document source"
+                        },
+                        {
+                            "name": "createdAt",
+                            "dataType": ["date"],
+                            "description": "Document creation date"
+                        }
+                    ]
+                }
+                self._client.schema.create_class(document_class)
+                logger.info(f"Created {self.document_class} class in Weaviate")
+            
+            # Create Chunk class if it doesn't exist
+            if self.chunk_class not in existing_classes:
+                chunk_class = {
+                    "class": self.chunk_class,
+                    "description": "Text chunk class for knowledge base",
+                    "properties": [
+                        {
+                            "name": "content",
+                            "dataType": ["text"],
+                            "description": "Chunk content"
+                        },
+                        {
+                            "name": "type",
+                            "dataType": ["string"],
+                            "description": "Entry type (chunk)"
+                        },
+                        {
+                            "name": "documentId",
+                            "dataType": ["string"],
+                            "description": "ID of the parent document"
+                        },
+                        {
+                            "name": "startIndex",
+                            "dataType": ["int"],
+                            "description": "Start index in the document"
+                        },
+                        {
+                            "name": "endIndex",
+                            "dataType": ["int"],
+                            "description": "End index in the document"
+                        }
+                    ]
+                }
+                self._client.schema.create_class(chunk_class)
+                logger.info(f"Created {self.chunk_class} class in Weaviate")
+            
+        except Exception as e:
+            logger.error(f"Failed to create Weaviate schema: {e}")
+            raise StorageError(f"Failed to create schema: {e}", operation="create_schema", provider="weaviate")
+    
+    async def _load_document_chunks_mapping(self) -> None:
+        """Load document to chunks mapping from Weaviate."""
+        try:
+            # Query for chunks to build the document-chunks mapping
+            query = f"""
+            {{
+              Get {{
+                {self.chunk_class} {{
+                  _additional {{
+                    id
+                  }}
+                  documentId
+                }}
+              }}
+            }}
+            """
+            
+            result = self._client.query.raw(query)
+            
+            if result and "data" in result and "Get" in result["data"]:
+                chunks = result["data"]["Get"].get(self.chunk_class, [])
+                
+                # Build document-chunks mapping
+                self._document_chunks = defaultdict(list)
+                for chunk in chunks:
+                    chunk_id = chunk["_additional"]["id"]
+                    document_id = chunk.get("documentId")
+                    if document_id:
+                        self._document_chunks[document_id].append(chunk_id)
+                
+                logger.debug(f"Loaded document-chunks mapping for {len(self._document_chunks)} documents")
+            
+        except Exception as e:
+            logger.warning(f"Failed to load document-chunks mapping: {e}")
+    
     async def add_texts(
         self, 
         texts: List[str], 
@@ -154,7 +280,7 @@ class WeaviateVectorStore(BaseVectorStore):
         
         # Generate IDs if not provided
         if ids is None:
-            ids = [str(uuid.uuid4()) for _ in texts]
+            ids = [generate_uuid() for _ in texts]
         
         # Ensure metadatas list has correct length
         if metadatas is None:
@@ -183,8 +309,6 @@ class WeaviateVectorStore(BaseVectorStore):
                     document_id = metadata.get("document_id")
                     if document_id:
                         properties["documentId"] = document_id
-                        if document_id not in self._document_chunks:
-                            self._document_chunks[document_id] = []
                         self._document_chunks[document_id].append(ids[i])
                     
                     # Add vector if provided
@@ -322,9 +446,8 @@ class WeaviateVectorStore(BaseVectorStore):
                     )
                     
                     # Update document-chunks mapping
-                    if chunk.document_id not in self._document_chunks:
-                        self._document_chunks[chunk.document_id] = []
-                    self._document_chunks[chunk.document_id].append(chunk.id)
+                    if chunk.document_id:
+                        self._document_chunks[chunk.document_id].append(chunk.id)
             
             logger.info(f"Added {len(chunks)} chunks to Weaviate")
             return [chunk.id for chunk in chunks]
@@ -370,32 +493,8 @@ class WeaviateVectorStore(BaseVectorStore):
             # Extract content
             content = properties.get("content", "")
             
-            # Parse document type
-            from ...core.types import DocumentType
-            try:
-                doc_type = DocumentType(properties.get("documentType", "text"))
-            except ValueError:
-                doc_type = DocumentType.TEXT
-            
-            # Parse created_at
-            from datetime import datetime
-            created_at = datetime.now()
-            if "createdAt" in properties and properties["createdAt"]:
-                try:
-                    created_at = datetime.fromisoformat(properties["createdAt"].replace("Z", "+00:00"))
-                except ValueError:
-                    pass
-            
             # Create document object
-            from ...core.types import Document
-            document = Document(
-                id=document_id,
-                content=content,
-                type=doc_type,
-                source=properties.get("source"),
-                metadata={k: v for k, v in properties.items() if k not in ["content", "type", "documentType", "source", "createdAt"]},
-                created_at=created_at
-            )
+            document = metadata_to_document(document_id, content, properties)
             
             return document
             
@@ -442,16 +541,7 @@ class WeaviateVectorStore(BaseVectorStore):
             text = properties.get("content", "")
             
             # Create chunk object
-            from ...core.types import TextChunk
-            chunk = TextChunk(
-                id=chunk_id,
-                text=text,
-                document_id=properties.get("documentId", "unknown"),
-                metadata={k: v for k, v in properties.items() if k not in ["content", "type", "documentId", "startIndex", "endIndex"]},
-                embedding=vector,
-                start_index=properties.get("startIndex", 0),
-                end_index=properties.get("endIndex", len(text))
-            )
+            chunk = metadata_to_chunk(chunk_id, text, properties, vector)
             
             return chunk
             
@@ -601,7 +691,6 @@ class WeaviateVectorStore(BaseVectorStore):
                     metadata = {k: v for k, v in obj.items() if k not in ["content", "documentId", "startIndex", "endIndex", "_additional"]}
                     
                     # Create chunk object
-                    from ...core.types import TextChunk
                     chunk = TextChunk(
                         id=chunk_id,
                         text=content,
@@ -715,7 +804,6 @@ class WeaviateVectorStore(BaseVectorStore):
                     metadata = {k: v for k, v in obj.items() if k not in ["content", "documentId", "startIndex", "endIndex", "_additional"]}
                     
                     # Create chunk object
-                    from ...core.types import TextChunk
                     chunk = TextChunk(
                         id=chunk_id,
                         text=content,
@@ -869,35 +957,36 @@ class WeaviateVectorStore(BaseVectorStore):
             await self.initialize()
         
         try:
-            # Try to get the object from both classes
-            obj = None
-            class_name = None
-            
+            # Try to get object from Document class
             try:
-                obj = self._client.data_object.get_by_id(id, class_name=self.document_class)
+                result = self._client.data_object.get_by_id(
+                    id,
+                    class_name=self.document_class
+                )
                 class_name = self.document_class
             except Exception:
+                # Try to get object from Chunk class
                 try:
-                    obj = self._client.data_object.get_by_id(id, class_name=self.chunk_class)
+                    result = self._client.data_object.get_by_id(
+                        id,
+                        class_name=self.chunk_class
+                    )
                     class_name = self.chunk_class
                 except Exception:
                     logger.warning(f"Object with ID {id} not found in Weaviate")
                     return False
             
-            if not obj or not class_name:
+            if not result:
+                logger.warning(f"Object with ID {id} not found in Weaviate")
                 return False
             
-            # Get current properties
-            properties = obj.get("properties", {})
-            
-            # Merge metadata
-            for key, value in metadata.items():
-                if isinstance(value, (str, int, float, bool)):
-                    properties[key] = value
+            # Merge metadata with existing properties
+            properties = result.get("properties", {})
+            updated_properties = {**properties, **metadata}
             
             # Update object
             self._client.data_object.update(
-                properties,
+                updated_properties,
                 class_name=class_name,
                 uuid=id
             )
@@ -923,32 +1012,50 @@ class WeaviateVectorStore(BaseVectorStore):
             await self.initialize()
         
         try:
-            # Get schema
+            # Get schema statistics
             schema = self._client.schema.get()
             
-            # Get class statistics
-            document_class_info = None
-            chunk_class_info = None
-            
-            for class_info in schema.get("classes", []):
-                if class_info.get("class") == self.document_class:
-                    document_class_info = class_info
-                elif class_info.get("class") == self.chunk_class:
-                    chunk_class_info = class_info
-            
-            # Count objects
+            # Count documents and chunks
             document_count = 0
             chunk_count = 0
             
-            if document_class_info:
-                document_count_result = self._client.query.aggregate(self.document_class).with_meta_count().do()
-                if document_count_result and "data" in document_count_result and "Aggregate" in document_count_result["data"]:
-                    document_count = document_count_result["data"]["Aggregate"][self.document_class][0]["meta"]["count"]
+            # Query for document count
+            document_query = f"""
+            {{
+              Aggregate {{
+                {self.document_class} {{
+                  meta {{
+                    count
+                  }}
+                }}
+              }}
+            }}
+            """
             
-            if chunk_class_info:
-                chunk_count_result = self._client.query.aggregate(self.chunk_class).with_meta_count().do()
-                if chunk_count_result and "data" in chunk_count_result and "Aggregate" in chunk_count_result["data"]:
-                    chunk_count = chunk_count_result["data"]["Aggregate"][self.chunk_class][0]["meta"]["count"]
+            document_result = self._client.query.raw(document_query)
+            if document_result and "data" in document_result and "Aggregate" in document_result["data"]:
+                document_agg = document_result["data"]["Aggregate"].get(self.document_class, [])
+                if document_agg and "meta" in document_agg and "count" in document_agg["meta"]:
+                    document_count = document_agg["meta"]["count"]
+            
+            # Query for chunk count
+            chunk_query = f"""
+            {{
+              Aggregate {{
+                {self.chunk_class} {{
+                  meta {{
+                    count
+                  }}
+                }}
+              }}
+            }}
+            """
+            
+            chunk_result = self._client.query.raw(chunk_query)
+            if chunk_result and "data" in chunk_result and "Aggregate" in chunk_result["data"]:
+                chunk_agg = chunk_result["data"]["Aggregate"].get(self.chunk_class, [])
+                if chunk_agg and "meta" in chunk_agg and "count" in chunk_agg["meta"]:
+                    chunk_count = chunk_agg["meta"]["count"]
             
             return {
                 "document_count": document_count,
@@ -956,7 +1063,7 @@ class WeaviateVectorStore(BaseVectorStore):
                 "document_class": self.document_class,
                 "chunk_class": self.chunk_class,
                 "url": self.url,
-                "document_ids": list(self._document_chunks.keys())
+                "provider": "weaviate"
             }
             
         except Exception as e:
@@ -977,34 +1084,27 @@ class WeaviateVectorStore(BaseVectorStore):
             await self.initialize()
         
         try:
-            # Delete all objects from both classes
+            # Delete all objects from Document class
             self._client.batch.delete_objects(
                 class_name=self.document_class,
-                where={
-                    "operator": "NotEqual",
-                    "path": ["id"],
-                    "valueString": "dummy"  # This will match all objects
-                }
+                where={}  # Empty where clause means delete all
             )
             
+            # Delete all objects from Chunk class
             self._client.batch.delete_objects(
                 class_name=self.chunk_class,
-                where={
-                    "operator": "NotEqual",
-                    "path": ["id"],
-                    "valueString": "dummy"  # This will match all objects
-                }
+                where={}  # Empty where clause means delete all
             )
             
             # Clear document-chunks mapping
             self._document_chunks.clear()
             
-            logger.info(f"Cleared Weaviate classes {self.document_class} and {self.chunk_class}")
+            logger.info(f"Cleared all data from Weaviate classes {self.document_class} and {self.chunk_class}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to clear Weaviate: {e}")
-            raise StorageError(f"Failed to clear Weaviate: {e}", operation="clear", provider="weaviate")
+            logger.error(f"Failed to clear Weaviate data: {e}")
+            raise StorageError(f"Failed to clear data: {e}", operation="clear", provider="weaviate")
     
     async def close(self) -> None:
         """
@@ -1013,137 +1113,15 @@ class WeaviateVectorStore(BaseVectorStore):
         Raises:
             StorageError: If closing fails
         """
-        if not self._initialized:
-            return
-        
         try:
             # Weaviate client doesn't have an explicit close method
-            # But we can reset our state
+            # Just reset our instance variables
             self._client = None
+            self._document_chunks.clear()
             self._initialized = False
             
-            logger.info("WeaviateVectorStore closed")
+            logger.info("Closed WeaviateVectorStore connection")
             
         except Exception as e:
             logger.error(f"Error closing WeaviateVectorStore: {e}")
             raise StorageError(f"Error closing WeaviateVectorStore: {e}", operation="close", provider="weaviate")
-    
-    async def _create_schema(self) -> None:
-        """Create schema for document and chunk classes if they don't exist."""
-        try:
-            # Get current schema
-            schema = self._client.schema.get()
-            existing_classes = [cls["class"] for cls in schema.get("classes", [])]
-            
-            # Create Document class if it doesn't exist
-            if self.document_class not in existing_classes:
-                document_class = {
-                    "class": self.document_class,
-                    "description": "Document class for knowledge base",
-                    "vectorizer": "none",  # We'll provide vectors manually
-                    "properties": [
-                        {
-                            "name": "content",
-                            "dataType": ["text"],
-                            "description": "Document content"
-                        },
-                        {
-                            "name": "type",
-                            "dataType": ["string"],
-                            "description": "Object type (document)"
-                        },
-                        {
-                            "name": "documentType",
-                            "dataType": ["string"],
-                            "description": "Document type (text, pdf, etc.)"
-                        },
-                        {
-                            "name": "source",
-                            "dataType": ["string"],
-                            "description": "Document source"
-                        },
-                        {
-                            "name": "createdAt",
-                            "dataType": ["string"],
-                            "description": "Document creation timestamp"
-                        }
-                    ]
-                }
-                
-                self._client.schema.create_class(document_class)
-                logger.info(f"Created {self.document_class} class in Weaviate")
-            
-            # Create Chunk class if it doesn't exist
-            if self.chunk_class not in existing_classes:
-                chunk_class = {
-                    "class": self.chunk_class,
-                    "description": "Text chunk class for knowledge base",
-                    "vectorizer": "none",  # We'll provide vectors manually
-                    "properties": [
-                        {
-                            "name": "content",
-                            "dataType": ["text"],
-                            "description": "Chunk content"
-                        },
-                        {
-                            "name": "type",
-                            "dataType": ["string"],
-                            "description": "Object type (chunk)"
-                        },
-                        {
-                            "name": "documentId",
-                            "dataType": ["string"],
-                            "description": "ID of the parent document"
-                        },
-                        {
-                            "name": "startIndex",
-                            "dataType": ["int"],
-                            "description": "Start index in the original document"
-                        },
-                        {
-                            "name": "endIndex",
-                            "dataType": ["int"],
-                            "description": "End index in the original document"
-                        }
-                    ]
-                }
-                
-                self._client.schema.create_class(chunk_class)
-                logger.info(f"Created {self.chunk_class} class in Weaviate")
-            
-        except Exception as e:
-            logger.error(f"Failed to create schema in Weaviate: {e}")
-            raise StorageError(f"Failed to create schema: {e}", operation="create_schema", provider="weaviate")
-    
-    async def _load_document_chunks_mapping(self) -> None:
-        """Load document to chunks mapping from Weaviate."""
-        try:
-            # Query for all chunks
-            result = self._client.query.get(
-                self.chunk_class,
-                ["documentId", "_additional {id}"]
-            ).with_where({
-                "path": ["type"],
-                "operator": "Equal",
-                "valueString": "chunk"
-            }).with_limit(10000).do()  # Limit to 10000 chunks
-            
-            # Build document-chunks mapping
-            self._document_chunks = {}
-            
-            if result and "data" in result and "Get" in result["data"]:
-                objects = result["data"]["Get"].get(self.chunk_class, [])
-                
-                for obj in objects:
-                    chunk_id = obj["_additional"]["id"]
-                    document_id = obj.get("documentId")
-                    if document_id:
-                        if document_id not in self._document_chunks:
-                            self._document_chunks[document_id] = []
-                        self._document_chunks[document_id].append(chunk_id)
-            
-            logger.debug(f"Loaded document-chunks mapping with {len(self._document_chunks)} documents")
-            
-        except Exception as e:
-            logger.warning(f"Failed to load document-chunks mapping: {e}")
-            self._document_chunks = {}

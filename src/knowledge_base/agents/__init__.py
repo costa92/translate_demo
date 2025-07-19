@@ -1,7 +1,20 @@
 """
-Agents module for the knowledge base system.
-
-This module provides intelligent agents for the knowledge base system.
+Agent module for the knowledge base system.
 """
 
-# Import agents will be added as they are implemented
+from .base import AgentSystem, BaseAgent
+from .message import AgentMessage
+from .orchestrator import OrchestratorAgent
+from .registry import (AgentRegistry, create_agent, get_registry,
+                      register_agent)
+
+__all__ = [
+    "AgentSystem", 
+    "BaseAgent", 
+    "AgentMessage", 
+    "AgentRegistry", 
+    "get_registry", 
+    "register_agent", 
+    "create_agent",
+    "OrchestratorAgent"
+]

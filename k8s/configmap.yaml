@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: knowledge-base-config
+data:
+  KB_SYSTEM_LOG_LEVEL: "INFO"
+  KB_SYSTEM_DEBUG: "false"
+  KB_API_HOST: "0.0.0.0"
+  KB_API_PORT: "8000"
+  KB_API_CORS_ORIGINS: '["*"]'
+  KB_STORAGE_PROVIDER: "memory"
+  KB_EMBEDDING_PROVIDER: "sentence_transformers"
+  KB_EMBEDDING_MODEL: "all-MiniLM-L6-v2"
+  KB_CHUNKING_STRATEGY: "recursive"
+  KB_CHUNKING_CHUNK_SIZE: "1000"
+  KB_CHUNKING_CHUNK_OVERLAP: "200"
+  KB_RETRIEVAL_STRATEGY: "hybrid"
+  KB_RETRIEVAL_TOP_K: "5"
+  KB_GENERATION_PROVIDER: "simple"
+  KB_GENERATION_MODEL: "gpt-3.5-turbo"
+  KB_GENERATION_TEMPERATURE: "0.1"

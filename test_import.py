@@ -1,41 +1,87 @@
 #!/usr/bin/env python3
-
 """
-测试导入是否正常工作
+Test Import Script
+
+This script attempts to import all test modules to verify that they can be loaded
+without errors. This helps identify issues with test discovery.
 """
 
-import sys
 import os
+import sys
+import importlib
+import traceback
+from pathlib import Path
 
-# 添加项目根目录到Python路径
-project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+def check_test_file(file_path):
+    """Check if a test file can be imported without errors"""
+    try:
+        # Convert file path to module path
+        module_path = str(file_path).replace('/', '.').replace('\\', '.')
+        module_path = module_path.replace('.py', '')
+        
+        # Import the module
+        module = importlib.import_module(module_path)
+        
+        # Check if it has test functions
+        has_test_functions = False
+        for name in dir(module):
+            if name.startswith('test_'):
+                has_test_functions = True
+                break
+        
+        return True, has_test_functions, None
+    except Exception as e:
+        return False, False, str(e)
 
-# 打印Python路径
-print("Python路径:")
-for path in sys.path:
-    print(f"  - {path}")
+def main():
+    """Main function"""
+    print("Checking test files...")
+    
+    # Find all test files
+    test_files = []
+    for root, _, files in os.walk('tests'):
+        for file in files:
+            if file.startswith('test_') and file.endswith('.py'):
+                test_files.append(Path(root) / file)
+    
+    print(f"Found {len(test_files)} test files")
+    
+    # Check each test file
+    results = {
+        'success': [],
+        'no_test_functions': [],
+        'error': []
+    }
+    
+    for file_path in test_files:
+        print(f"Checking {file_path}...")
+        success, has_test_functions, error = check_test_file(file_path)
+        
+        if success:
+            if has_test_functions:
+                results['success'].append(str(file_path))
+            else:
+                results['no_test_functions'].append(str(file_path))
+        else:
+            results['error'].append((str(file_path), error))
+    
+    # Print results
+    print("\nResults:")
+    print(f"- {len(results['success'])} files imported successfully and contain test functions")
+    print(f"- {len(results['no_test_functions'])} files imported successfully but don't contain test functions")
+    print(f"- {len(results['error'])} files failed to import")
+    
+    if results['no_test_functions']:
+        print("\nFiles without test functions:")
+        for file in results['no_test_functions']:
+            print(f"- {file}")
+    
+    if results['error']:
+        print("\nFiles with import errors:")
+        for file, error in results['error']:
+            print(f"- {file}: {error}")
+    
+    return 0 if not results['error'] else 1
 
-# 检查文件是否存在
-llm_path = os.path.join(project_root, 'src', 'llm', 'base.py')
-print(f"\n检查文件是否存在: {llm_path}")
-print(f"文件存在: {os.path.exists(llm_path)}")
-
-# 尝试直接导入
-try:
-    import src.llm.base
-    print("\n直接导入src.llm.base成功！")
-    print(f"LLMFactory: {src.llm.base.LLMFactory}")
-    print(f"LLM: {src.llm.base.LLM}")
-except Exception as e:
-    print(f"\n直接导入src.llm.base失败: {e}")
-
-# 尝试通过translate_demo导入
-try:
-    from src.translate_demo.llm import LLMFactory, LLM
-    print("\n通过translate_demo导入成功！")
-    print(f"LLMFactory: {LLMFactory}")
-    print(f"LLM: {LLM}")
-except Exception as e:
-    print(f"\n通过translate_demo导入失败: {e}")
+if __name__ == "__main__":
+    sys.exit(main())

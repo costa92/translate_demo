@@ -16,6 +16,7 @@ import logging
 import uuid
 import json
 from typing import List, Dict, Any, Optional, Tuple, Union, cast
+from collections import defaultdict
 
 from ...core.types import Document, TextChunk
 from ...core.exceptions import (
@@ -26,6 +27,13 @@ from ...core.exceptions import (
     MissingConfigurationError
 )
 from ..base import BaseVectorStore
+from .utils import (
+    generate_uuid,
+    document_to_metadata,
+    chunk_to_metadata,
+    metadata_to_document,
+    metadata_to_chunk
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +96,7 @@ class PineconeVectorStore(BaseVectorStore):
         self._index = None
         
         # Document ID to chunk IDs mapping for efficient document deletion
-        self._document_chunks: Dict[str, List[str]] = {}
+        self._document_chunks: Dict[str, List[str]] = defaultdict(list)
         
         logger.info(f"PineconeVectorStore initialized with index: {self.index_name}")
     
@@ -132,6 +140,47 @@ class PineconeVectorStore(BaseVectorStore):
             logger.error(f"Failed to initialize PineconeVectorStore: {e}")
             raise StorageConnectionError("pinecone", str(e))
     
+    async def _load_document_chunks_mapping(self) -> None:
+        """Load document to chunks mapping from the index."""
+        try:
+            # Query for chunks to build the document-chunks mapping
+            # Since we can't fetch all vectors at once, we'll use a query with a filter
+            # This is not efficient for large collections but works for initialization
+            
+            # We need to have a vector for the query, so we'll create a zero vector
+            if not self.dimension:
+                # Try to get dimension from index stats
+                stats = self._index.describe_index_stats()
+                self.dimension = stats.dimension
+                if not self.dimension:
+                    logger.warning("Could not determine vector dimension, skipping document-chunks mapping load")
+                    return
+            
+            zero_vector = [0.0] * self.dimension
+            
+            # Query for chunks
+            result = self._index.query(
+                vector=zero_vector,
+                top_k=10000,  # Use a large number to get as many as possible
+                namespace=self.namespace,
+                filter={"type": "chunk"},
+                include_metadata=True
+            )
+            
+            # Build document-chunks mapping
+            self._document_chunks = defaultdict(list)
+            for match in result.matches:
+                chunk_id = match.id
+                metadata = match.metadata
+                document_id = metadata.get("document_id")
+                if document_id:
+                    self._document_chunks[document_id].append(chunk_id)
+            
+            logger.debug(f"Loaded document-chunks mapping for {len(self._document_chunks)} documents")
+            
+        except Exception as e:
+            logger.warning(f"Failed to load document-chunks mapping: {e}")
+    
     async def add_texts(
         self, 
         texts: List[str], 
@@ -162,7 +211,7 @@ class PineconeVectorStore(BaseVectorStore):
         
         # Generate IDs if not provided
         if ids is None:
-            ids = [str(uuid.uuid4()) for _ in texts]
+            ids = [generate_uuid() for _ in texts]
         
         # Ensure metadatas list has correct length
         if metadatas is None:
@@ -186,8 +235,6 @@ class PineconeVectorStore(BaseVectorStore):
                 # Process document_id in metadata for document-chunk mapping
                 document_id = metadata.get("document_id")
                 if document_id:
-                    if document_id not in self._document_chunks:
-                        self._document_chunks[document_id] = []
                     self._document_chunks[document_id].append(ids[i])
                 
                 vectors.append({
@@ -236,24 +283,25 @@ class PineconeVectorStore(BaseVectorStore):
             
             for document in documents:
                 # Store document as a special entry with document metadata
-                doc_metadata = {
-                    "document_id": document.id,
-                    "type": "document",
-                    "document_type": document.type.value if hasattr(document.type, "value") else str(document.type),
-                    "source": document.source or "",
-                    "created_at": document.created_at.isoformat() if document.created_at else "",
-                    "text": document.content,  # Store content in metadata
-                }
+                metadata = document_to_metadata(document)
                 
-                # Add any custom metadata
-                if document.metadata:
-                    for key, value in document.metadata.items():
-                        if key not in doc_metadata:
-                            doc_metadata[key] = value
+                # Add text to metadata
+                metadata["text"] = document.content
                 
                 # We need an embedding for the document
                 # Since Pinecone requires embeddings, we'll use a placeholder
                 # In a real implementation, you would compute an embedding for the document
+                if not self.dimension:
+                    # Try to get dimension from index stats
+                    stats = self._index.describe_index_stats()
+                    self.dimension = stats.dimension
+                    if not self.dimension:
+                        raise StorageError(
+                            "Could not determine vector dimension for Pinecone index",
+                            operation="add_documents",
+                            provider="pinecone"
+                        )
+                
                 placeholder_embedding = [0.0] * self.dimension
                 
                 # Add document to index
@@ -261,7 +309,7 @@ class PineconeVectorStore(BaseVectorStore):
                     vectors=[{
                         "id": document.id,
                         "values": placeholder_embedding,
-                        "metadata": doc_metadata
+                        "metadata": metadata
                     }],
                     namespace=self.namespace
                 )
@@ -311,19 +359,10 @@ class PineconeVectorStore(BaseVectorStore):
             vectors = []
             for chunk in chunks:
                 # Prepare metadata
-                metadata = {
-                    "document_id": chunk.document_id,
-                    "type": "chunk",
-                    "start_index": chunk.start_index,
-                    "end_index": chunk.end_index,
-                    "text": chunk.text,  # Store text in metadata
-                }
+                metadata = chunk_to_metadata(chunk)
                 
-                # Add any custom metadata
-                if chunk.metadata:
-                    for key, value in chunk.metadata.items():
-                        if key not in metadata:
-                            metadata[key] = value
+                # Add text to metadata
+                metadata["text"] = chunk.text
                 
                 vectors.append({
                     "id": chunk.id,
@@ -332,9 +371,8 @@ class PineconeVectorStore(BaseVectorStore):
                 })
                 
                 # Update document-chunks mapping
-                if chunk.document_id not in self._document_chunks:
-                    self._document_chunks[chunk.document_id] = []
-                self._document_chunks[chunk.document_id].append(chunk.id)
+                if chunk.document_id:
+                    self._document_chunks[chunk.document_id].append(chunk.id)
             
             # Upsert vectors in batches
             batch_size = 100
@@ -383,32 +421,8 @@ class PineconeVectorStore(BaseVectorStore):
             # Extract content
             content = metadata.get("text", "")
             
-            # Parse document type
-            from ...core.types import DocumentType
-            try:
-                doc_type = DocumentType(metadata.get("document_type", "text"))
-            except ValueError:
-                doc_type = DocumentType.TEXT
-            
-            # Parse created_at
-            from datetime import datetime
-            created_at = datetime.now()
-            if "created_at" in metadata and metadata["created_at"]:
-                try:
-                    created_at = datetime.fromisoformat(metadata["created_at"].replace("Z", "+00:00"))
-                except ValueError:
-                    pass
-            
             # Create document object
-            from ...core.types import Document
-            document = Document(
-                id=document_id,
-                content=content,
-                type=doc_type,
-                source=metadata.get("source"),
-                metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "document_type", "source", "created_at", "text"]},
-                created_at=created_at
-            )
+            document = metadata_to_document(document_id, content, metadata)
             
             return document
             
@@ -452,16 +466,7 @@ class PineconeVectorStore(BaseVectorStore):
             text = metadata.get("text", "")
             
             # Create chunk object
-            from ...core.types import TextChunk
-            chunk = TextChunk(
-                id=chunk_id,
-                text=text,
-                document_id=metadata.get("document_id", "unknown"),
-                metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index", "text"]},
-                embedding=embedding,
-                start_index=metadata.get("start_index", 0),
-                end_index=metadata.get("end_index", len(text))
-            )
+            chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
             
             return chunk
             
@@ -512,17 +517,7 @@ class PineconeVectorStore(BaseVectorStore):
                     text = metadata.get("text", "")
                     
                     # Create chunk object
-                    from ...core.types import TextChunk
-                    chunk = TextChunk(
-                        id=chunk_id,
-                        text=text,
-                        document_id=metadata.get("document_id", "unknown"),
-                        metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index", "text"]},
-                        embedding=embedding,
-                        start_index=metadata.get("start_index", 0),
-                        end_index=metadata.get("end_index", len(text))
-                    )
-                    
+                    chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
                     chunks.append(chunk)
             
             return chunks
@@ -588,16 +583,7 @@ class PineconeVectorStore(BaseVectorStore):
                 text = metadata.get("text", "")
                 
                 # Create chunk object
-                from ...core.types import TextChunk
-                chunk = TextChunk(
-                    id=chunk_id,
-                    text=text,
-                    document_id=metadata.get("document_id", "unknown"),
-                    metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index", "text"]},
-                    embedding=embedding,
-                    start_index=metadata.get("start_index", 0),
-                    end_index=metadata.get("end_index", len(text))
-                )
+                chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
                 
                 chunks_with_scores.append((chunk, score))
             
@@ -643,6 +629,17 @@ class PineconeVectorStore(BaseVectorStore):
             # Get all chunks matching the filter
             # Since we can't fetch all vectors at once, we'll use a query with a placeholder vector
             # This is not efficient for large collections
+            if not self.dimension:
+                # Try to get dimension from index stats
+                stats = self._index.describe_index_stats()
+                self.dimension = stats.dimension
+                if not self.dimension:
+                    raise StorageError(
+                        "Could not determine vector dimension for Pinecone index",
+                        operation="keyword_search",
+                        provider="pinecone"
+                    )
+            
             placeholder_vector = [0.0] * self.dimension
             result = self._index.query(
                 vector=placeholder_vector,
@@ -672,16 +669,7 @@ class PineconeVectorStore(BaseVectorStore):
                 # Only include results with at least one matching term
                 if score > 0:
                     # Create chunk object
-                    from ...core.types import TextChunk
-                    chunk = TextChunk(
-                        id=chunk_id,
-                        text=text,
-                        document_id=metadata.get("document_id", "unknown"),
-                        metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index", "text"]},
-                        embedding=embedding,
-                        start_index=metadata.get("start_index", 0),
-                        end_index=metadata.get("end_index", len(text))
-                    )
+                    chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
                     
                     chunks_with_scores.append((chunk, score))
             
@@ -804,7 +792,7 @@ class PineconeVectorStore(BaseVectorStore):
             # Extract current data
             vector_data = result.vectors[id]
             current_metadata = vector_data.metadata
-            embedding = vector_data.values
+            current_values = vector_data.values
             
             # Merge metadata
             updated_metadata = {**current_metadata, **metadata}
@@ -813,7 +801,7 @@ class PineconeVectorStore(BaseVectorStore):
             self._index.upsert(
                 vectors=[{
                     "id": id,
-                    "values": embedding,
+                    "values": current_values,
                     "metadata": updated_metadata
                 }],
                 namespace=self.namespace
@@ -840,24 +828,21 @@ class PineconeVectorStore(BaseVectorStore):
             await self.initialize()
         
         try:
-            # Get index stats
-            index_stats = self._index.describe_index_stats()
+            # Get index statistics
+            stats = self._index.describe_index_stats()
             
-            # Get namespace stats
-            namespace_stats = index_stats.namespaces.get(self.namespace, {"vector_count": 0})
-            
-            # Count documents and chunks
-            document_count = len(self._document_chunks)
-            chunk_count = sum(len(chunks) for chunks in self._document_chunks.values())
+            # Extract namespace statistics
+            namespace_stats = stats.namespaces.get(self.namespace, {})
+            vector_count = namespace_stats.vector_count if namespace_stats else 0
             
             return {
-                "total_vector_count": namespace_stats.get("vector_count", 0),
-                "document_count": document_count,
-                "chunk_count": chunk_count,
+                "total_vectors": stats.total_vector_count,
+                "namespace_vectors": vector_count,
+                "dimension": stats.dimension,
                 "index_name": self.index_name,
                 "namespace": self.namespace,
-                "dimension": self.dimension or index_stats.dimension,
-                "document_ids": list(self._document_chunks.keys())
+                "document_count": len(self._document_chunks),
+                "provider": "pinecone"
             }
             
         except Exception as e:
@@ -884,12 +869,12 @@ class PineconeVectorStore(BaseVectorStore):
             # Clear document-chunks mapping
             self._document_chunks.clear()
             
-            logger.info(f"Cleared Pinecone namespace {self.namespace}")
+            logger.info(f"Cleared all data from Pinecone index {self.index_name} namespace {self.namespace}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to clear Pinecone namespace: {e}")
-            raise StorageError(f"Failed to clear namespace: {e}", operation="clear", provider="pinecone")
+            logger.error(f"Failed to clear Pinecone index: {e}")
+            raise StorageError(f"Failed to clear index: {e}", operation="clear", provider="pinecone")
     
     async def close(self) -> None:
         """
@@ -898,50 +883,16 @@ class PineconeVectorStore(BaseVectorStore):
         Raises:
             StorageError: If closing fails
         """
-        if not self._initialized:
-            return
-        
         try:
             # Pinecone doesn't have an explicit close method
-            # But we can reset our state
-            self._index = None
+            # Just reset our instance variables
             self._client = None
+            self._index = None
+            self._document_chunks.clear()
             self._initialized = False
             
-            logger.info("PineconeVectorStore closed")
+            logger.info("Closed PineconeVectorStore connection")
             
         except Exception as e:
             logger.error(f"Error closing PineconeVectorStore: {e}")
             raise StorageError(f"Error closing PineconeVectorStore: {e}", operation="close", provider="pinecone")
-    
-    async def _load_document_chunks_mapping(self) -> None:
-        """Load document to chunks mapping from the index."""
-        try:
-            # We need to query for all chunks
-            # Since we can't fetch all vectors at once, we'll use a query with a placeholder vector
-            # This is not efficient for large collections
-            placeholder_vector = [0.0] * self.dimension
-            result = self._index.query(
-                vector=placeholder_vector,
-                top_k=10000,  # Fetch a large number of results
-                namespace=self.namespace,
-                filter={"type": "chunk"},
-                include_metadata=True
-            )
-            
-            # Build document-chunks mapping
-            self._document_chunks = {}
-            for match in result.matches:
-                chunk_id = match.id
-                metadata = match.metadata
-                document_id = metadata.get("document_id")
-                if document_id:
-                    if document_id not in self._document_chunks:
-                        self._document_chunks[document_id] = []
-                    self._document_chunks[document_id].append(chunk_id)
-            
-            logger.debug(f"Loaded document-chunks mapping with {len(self._document_chunks)} documents")
-            
-        except Exception as e:
-            logger.warning(f"Failed to load document-chunks mapping: {e}")
-            self._document_chunks = {}

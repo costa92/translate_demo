@@ -16,6 +16,7 @@ packages = [
   {include = "agents", from = "src"},
   {include = "translate_demo", from = "src"},
   {include = "knowledge_base", from = "src"},
+  {include = "src"},
 ]
 
 [tool.poetry.dependencies]
@@ -48,6 +49,7 @@ chromadb = "^0.4.22"
 notion-client = "^2.2.1"
 pydantic = "^2.5.2"
 tenacity = "^8.2.3"
+psutil = "^5.9.8"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"

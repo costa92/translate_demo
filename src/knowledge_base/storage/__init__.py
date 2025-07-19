@@ -5,10 +5,10 @@ This module provides storage capabilities for the knowledge base system.
 """
 
 from .base import BaseVectorStore
-from .vector_store import VectorStore, create_vector_store
+from .vector_store import VectorStore, VectorStoreFactory
 
 __all__ = [
     'BaseVectorStore',
     'VectorStore',
-    'create_vector_store',
+    'VectorStoreFactory',
 ]

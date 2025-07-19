@@ -92,6 +92,7 @@ Vector = List[float]
 Metadata = Dict[str, Any]
 DocumentID = str
 ChunkID = str
+Chunk = TextChunk  # Backward compatibility alias
 
 @dataclass
 class RetrievalResult:
@@ -251,6 +252,28 @@ class ProcessingResult:
 
 
 @dataclass
+class Citation:
+    """Represents a citation to a source document.
+    
+    Attributes:
+        document_id: ID of the cited document
+        chunk_id: ID of the specific chunk cited
+        text: The cited text
+        start_index: Starting position in the generated content
+        end_index: Ending position in the generated content
+        relevance: Relevance score of the citation
+        metadata: Additional information about the citation
+    """
+    document_id: str
+    chunk_id: str
+    text: str
+    start_index: int = 0
+    end_index: int = 0
+    relevance: float = 0.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class GenerationResult:
     """Result of generating content.
     
@@ -258,7 +281,9 @@ class GenerationResult:
         prompt: The prompt used for generation
         content: The generated content
         metadata: Additional information about the generation process
+        citations: List of citations to source documents
     """
     prompt: str
     content: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+    citations: List[Citation] = field(default_factory=list)

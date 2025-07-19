@@ -2,7 +2,7 @@ import asyncio
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.agents.knowledge_base.orchestrator_agent import OrchestratorAgent
+from src.knowledge_base.agents.orchestrator import OrchestratorAgent
 
 async def main():
     """

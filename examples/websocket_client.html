@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base WebSocket Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea, button {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .response {
+            white-space: pre-wrap;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .notification {
+            background-color: #cce5ff;
+            color: #004085;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Knowledge Base WebSocket Client</h1>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Connection</h2>
+            <div class="form-group">
+                <label for="websocket-url">WebSocket URL:</label>
+                <input type="text" id="websocket-url" value="ws://localhost:8000" />
+            </div>
+            <div class="form-group">
+                <label for="client-id">Client ID (optional):</label>
+                <input type="text" id="client-id" placeholder="Leave empty for random ID" />
+            </div>
+            <button id="connect-btn">Connect</button>
+            <button id="disconnect-btn" disabled>Disconnect</button>
+            <div id="connection-status" class="status disconnected">Disconnected</div>
+        </div>
+        
+        <div class="card">
+            <h2>Query</h2>
+            <div class="form-group">
+                <label for="query-text">Query:</label>
+                <textarea id="query-text" placeholder="Enter your query here..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="stream-query" />
+                    Stream response
+                </label>
+            </div>
+            <button id="query-btn" disabled>Send Query</button>
+            <div class="form-group">
+                <label for="response">Response:</label>
+                <div id="response" class="response"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Notifications</h2>
+            <div class="form-group">
+                <label for="topic">Topic:</label>
+                <input type="text" id="topic" value="system_status" />
+            </div>
+            <button id="subscribe-btn" disabled>Subscribe</button>
+            <button id="unsubscribe-btn" disabled>Unsubscribe</button>
+            <div id="notifications"></div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM elements
+        const websocketUrlInput = document.getElementById('websocket-url');
+        const clientIdInput = document.getElementById('client-id');
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const connectionStatus = document.getElementById('connection-status');
+        const queryTextInput = document.getElementById('query-text');
+        const streamQueryCheckbox = document.getElementById('stream-query');
+        const queryBtn = document.getElementById('query-btn');
+        const responseDiv = document.getElementById('response');
+        const topicInput = document.getElementById('topic');
+        const subscribeBtn = document.getElementById('subscribe-btn');
+        const unsubscribeBtn = document.getElementById('unsubscribe-btn');
+        const notificationsDiv = document.getElementById('notifications');
+        
+        // WebSocket client state
+        let websocket = null;
+        let clientId = '';
+        let subscriptions = new Set();
+        
+        // Generate a random client ID
+        function generateClientId() {
+            return 'client_' + Math.random().toString(36).substring(2, 15);
+        }
+        
+        // Connect to WebSocket server
+        connectBtn.addEventListener('click', () => {
+            const url = websocketUrlInput.value.trim();
+            clientId = clientIdInput.value.trim() || generateClientId();
+            
+            const fullUrl = `${url}/ws/${clientId}`;
+            websocket = new WebSocket(fullUrl);
+            
+            websocket.onopen = () => {
+                console.log('Connected to WebSocket server');
+                connectionStatus.textContent = `Connected as ${clientId}`;
+                connectionStatus.className = 'status connected';
+                
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                queryBtn.disabled = false;
+                subscribeBtn.disabled = false;
+                unsubscribeBtn.disabled = false;
+            };
+            
+            websocket.onclose = () => {
+                console.log('Disconnected from WebSocket server');
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.className = 'status disconnected';
+                
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                queryBtn.disabled = true;
+                subscribeBtn.disabled = true;
+                unsubscribeBtn.disabled = true;
+                
+                websocket = null;
+            };
+            
+            websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                connectionStatus.textContent = `Error: ${error.message || 'Connection failed'}`;
+                connectionStatus.className = 'status disconnected';
+            };
+            
+            websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Received message:', data);
+                
+                // Handle different message types
+                if (data.type === 'response') {
+                    responseDiv.textContent = JSON.stringify(data.data, null, 2);
+                }
+                else if (data.type === 'chunk') {
+                    const chunkText = data.data?.text || '';
+                    responseDiv.textContent += chunkText;
+                }
+                else if (data.type === 'complete') {
+                    responseDiv.textContent += '\n\n[Stream complete]';
+                }
+                else if (data.type === 'notification') {
+                    const notificationDiv = document.createElement('div');
+                    notificationDiv.className = 'notification';
+                    notificationDiv.textContent = `${data.topic}: ${JSON.stringify(data.data, null, 2)}`;
+                    notificationsDiv.prepend(notificationDiv);
+                }
+                else if (data.type === 'error') {
+                    responseDiv.textContent = `Error: ${data.error}`;
+                }
+                else if (data.type === 'subscription') {
+                    if (data.status === 'subscribed') {
+                        subscriptions.add(data.topic);
+                        const notificationDiv = document.createElement('div');
+                        notificationDiv.className = 'notification';
+                        notificationDiv.textContent = `Subscribed to ${data.topic}`;
+                        notificationsDiv.prepend(notificationDiv);
+                    }
+                    else if (data.status === 'unsubscribed') {
+                        subscriptions.delete(data.topic);
+                        const notificationDiv = document.createElement('div');
+                        notificationDiv.className = 'notification';
+                        notificationDiv.textContent = `Unsubscribed from ${data.topic}`;
+                        notificationsDiv.prepend(notificationDiv);
+                    }
+                }
+            };
+        });
+        
+        // Disconnect from WebSocket server
+        disconnectBtn.addEventListener('click', () => {
+            if (websocket) {
+                websocket.close();
+            }
+        });
+        
+        // Send a query
+        queryBtn.addEventListener('click', () => {
+            if (!websocket) return;
+            
+            const queryText = queryTextInput.value.trim();
+            if (!queryText) {
+                alert('Please enter a query');
+                return;
+            }
+            
+            const stream = streamQueryCheckbox.checked;
+            const requestId = 'query_' + Math.random().toString(36).substring(2, 15);
+            
+            const message = {
+                request_id: requestId,
+                request_type: 'query',
+                payload: {
+                    query: queryText,
+                    stream: stream
+                }
+            };
+            
+            // Clear previous response
+            responseDiv.textContent = stream ? 'Streaming response:\n' : 'Waiting for response...';
+            
+            // Send the query
+            websocket.send(JSON.stringify(message));
+        });
+        
+        // Subscribe to a topic
+        subscribeBtn.addEventListener('click', () => {
+            if (!websocket) return;
+            
+            const topic = topicInput.value.trim();
+            if (!topic) {
+                alert('Please enter a topic');
+                return;
+            }
+            
+            const requestId = 'sub_' + Math.random().toString(36).substring(2, 15);
+            
+            const message = {
+                request_id: requestId,
+                request_type: 'subscribe',
+                payload: {
+                    topic: topic
+                }
+            };
+            
+            // Send the subscription request
+            websocket.send(JSON.stringify(message));
+        });
+        
+        // Unsubscribe from a topic
+        unsubscribeBtn.addEventListener('click', () => {
+            if (!websocket) return;
+            
+            const topic = topicInput.value.trim();
+            if (!topic) {
+                alert('Please enter a topic');
+                return;
+            }
+            
+            const requestId = 'unsub_' + Math.random().toString(36).substring(2, 15);
+            
+            const message = {
+                request_id: requestId,
+                request_type: 'unsubscribe',
+                payload: {
+                    topic: topic
+                }
+            };
+            
+            // Send the unsubscription request
+            websocket.send(JSON.stringify(message));
+        });
+    </script>
+</body>
+</html>

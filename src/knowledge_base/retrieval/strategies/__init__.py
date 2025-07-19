@@ -1,7 +1,16 @@
 """
-Retrieval strategies for the knowledge base system.
+Retrieval strategies for the unified knowledge base system.
 
-This module contains various retrieval strategy implementations.
+This package provides various retrieval strategies for finding relevant information
+in the knowledge base.
 """
 
-# Import strategies will be added as they are implemented
+from .semantic import SemanticStrategy
+from .keyword import KeywordStrategy
+from .hybrid import HybridStrategy
+
+__all__ = [
+    "SemanticStrategy",
+    "KeywordStrategy",
+    "HybridStrategy"
+]

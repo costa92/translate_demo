@@ -140,6 +140,7 @@ class RetrievalConfig:
     # Caching
     cache_enabled: bool = True
     cache_ttl: int = 3600  # seconds
+    cache_size: int = 1000  # maximum number of entries
 
 
 @dataclass

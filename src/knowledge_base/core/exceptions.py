@@ -348,6 +348,14 @@ class AgentError(KnowledgeBaseError):
         self.task_id = task_id
 
 
+class MaintenanceError(AgentError):
+    """Exception raised during maintenance operations."""
+    
+    def __init__(self, message: str, operation: str = None, agent_id: str = None):
+        super().__init__(f"Maintenance error: {message}", agent_id=agent_id)
+        self.operation = operation
+
+
 class AgentNotFoundError(AgentError):
     """Exception raised when an agent is not found."""
     
@@ -376,6 +384,61 @@ class AgentTaskError(AgentError):
         if reason:
             message += f" ({reason})"
         super().__init__(message, agent_id=agent_id, task_id=task_id)
+        self.reason = reason
+
+
+# Monitoring Exceptions
+
+class MonitoringError(KnowledgeBaseError):
+    """Base exception for monitoring errors."""
+    
+    def __init__(self, message: str, component: str = None):
+        details = {}
+        if component:
+            details["component"] = component
+        super().__init__(message, "MONITORING_ERROR", details)
+        self.component = component
+
+
+class MetricNotFoundError(MonitoringError):
+    """Exception raised when a metric is not found."""
+    
+    def __init__(self, metric_name: str):
+        super().__init__(f"Metric not found: {metric_name}")
+        self.metric_name = metric_name
+
+
+class InvalidMetricTypeError(MonitoringError):
+    """Exception raised when a metric type is invalid."""
+    
+    def __init__(self, metric_name: str, metric_type: str):
+        super().__init__(f"Invalid metric type for {metric_name}: {metric_type}")
+        self.metric_name = metric_name
+        self.metric_type = metric_type
+
+
+class HealthCheckError(MonitoringError):
+    """Exception raised when a health check fails."""
+    
+    def __init__(self, check_name: str, reason: str = None):
+        message = f"Health check failed: {check_name}"
+        if reason:
+            message += f" ({reason})"
+        super().__init__(message, component=check_name)
+        self.check_name = check_name
+        self.reason = reason
+
+
+class AlertError(MonitoringError):
+    """Exception raised when an alert operation fails."""
+    
+    def __init__(self, alert_id: str, operation: str, reason: str = None):
+        message = f"Alert operation '{operation}' failed for alert '{alert_id}'"
+        if reason:
+            message += f": {reason}"
+        super().__init__(message)
+        self.alert_id = alert_id
+        self.operation = operation
         self.reason = reason
 
 

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base API Interactive Documentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+    <style>
+        body {
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        .endpoint-card {
+            margin-bottom: 20px;
+        }
+        .endpoint-header {
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+        }
+        .endpoint-body {
+            padding: 15px;
+            border-radius: 0 0 5px 5px;
+        }
+        .method-badge {
+            font-size: 14px;
+            padding: 5px 10px;
+            margin-right: 10px;
+        }
+        .get { background-color: #61affe; }
+        .post { background-color: #49cc90; }
+        .put { background-color: #fca130; }
+        .delete { background-color: #f93e3e; }
+        .patch { background-color: #50e3c2; }
+        .response-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+        }
+        .tab-content {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .param-required {
+            color: red;
+            font-weight: bold;
+        }
+        .param-optional {
+            color: #6c757d;
+        }
+        .websocket-container {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .websocket-log {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-bottom: 15px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-sent {
+            background-color: #e6f7ff;
+        }
+        .log-received {
+            background-color: #f6ffed;
+        }
+        .log-error {
+            background-color: #fff1f0;
+        }
+        .log-info {
+            background-color: #f9f0ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Knowledge Base API Interactive Documentation</h1>
+        
+        <ul class="nav nav-pills mb-3" id="api-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="rest-tab" data-bs-toggle="pill" data-bs-target="#rest" type="button" role="tab" aria-controls="rest" aria-selected="true">REST API</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="websocket-tab" data-bs-toggle="pill" data-bs-target="#websocket" type="button" role="tab" aria-controls="websocket" aria-selected="false">WebSocket API</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="api-tabs-content">
+            <!-- REST API Tab -->
+            <div class="tab-pane fade show active" id="rest" role="tabpanel" aria-labelledby="rest-tab">
+                <div class="mb-3">
+                    <label for="base-url" class="form-label">Base URL</label>
+                    <input type="text" class="form-control" id="base-url" value="http://localhost:8000">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="api-key" class="form-label">API Key (X-API-Key header)</label>
+                    <input type="text" class="form-control" id="api-key" placeholder="Enter your API key">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="bearer-token" class="form-label">Bearer Token (Authorization header)</label>
+                    <input type="text" class="form-control" id="bearer-token" placeholder="Enter your bearer token">
+                </div>
+                
+                <h2 class="mt-4 mb-3">Knowledge Management</h2>
+                
+                <!-- Add Document Endpoint -->
+                <div class="card endpoint-card">
+                    <div class="card-header endpoint-header bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#add-document-body">
+                        <div>
+                            <span class="badge method-badge post">POST</span>
+                            <span>/knowledge/documents</span>
+                        </div>
+                        <span>Add a document</span>
+                    </div>
+                    <div id="add-document-body" class="collapse endpoint-body">
+                        <div class="mb-3">
+                            <label class="form-label">Request Body</label>
+                            <textarea class="form-control" id="add-document-body-input" rows="5">{
+  "content": "This is a sample document content.",
+  "type": "text",
+  "metadata": {
+    "source": "user-upload",
+    "author": "John Doe",
+    "tags": ["sample", "documentation"]
+  }
+}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="sendRequest('POST', '/knowledge/documents', 'add-document-body-input', 'add-document-response')">Send Request</button>
+                        <div class="mt-3">
+                            <h5>Response</h5>
+                            <pre class="response-container"><code class="language-json" id="add-document-response"></code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Get Document Endpoint -->
+                <div class="card endpoint-card">
+                    <div class="card-header endpoint-header bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#get-document-body">
+                        <div>
+                            <span class="badge method-badge get">GET</span>
+                            <span>/knowledge/documents/{document_id}</span>
+                        </div>
+                        <span>Get a document</span>
+                    </div>
+                    <div id="get-document-body" class="collapse endpoint-body">
+                        <div class="mb-3">
+                            <label class="form-label">Document ID <span class="param-required">*</span></label>
+                            <input type="text" class="form-control" id="get-document-id" placeholder="Enter document ID">
+                        </div>
+                        <button class="btn btn-primary" onclick="sendRequestWithPathParam('GET', '/knowledge/documents/', 'get-document-id', null, 'get-document-response')">Send Request</button>
+                        <div class="mt-3">
+                            <h5>Response</h5>
+                            <pre class="response-container"><code class="language-json" id="get-document-response"></code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <h2 class="mt-4 mb-3">Query API</h2>
+                
+                <!-- Query Endpoint -->
+                <div class="card endpoint-card">
+                    <div class="card-header endpoint-header bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#query-body">
+                        <div>
+                            <span class="badge method-badge post">POST</span>
+                            <span>/query</span>
+                        </div>
+                        <span>Query the knowledge base</span>
+                    </div>
+                    <div id="query-body" class="collapse endpoint-body">
+                        <div class="mb-3">
+                            <label class="form-label">Request Body</label>
+                            <textarea class="form-control" id="query-body-input" rows="5">{
+  "query": "What is the capital of France?",
+  "top_k": 5,
+  "stream": false
+}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="sendRequest('POST', '/query', 'query-body-input', 'query-response')">Send Request</button>
+                        <div class="mt-3">
+                            <h5>Response</h5>
+                            <pre class="response-container"><code class="language-json" id="query-response"></code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Similarity Search Endpoint -->
+                <div class="card endpoint-card">
+                    <div class="card-header endpoint-header bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#similarity-body">
+                        <div>
+                            <span class="badge method-badge post">POST</span>
+                            <span>/query/similarity</span>
+                        </div>
+                        <span>Similarity search</span>
+                    </div>
+                    <div id="similarity-body" class="collapse endpoint-body">
+                        <div class="mb-3">
+                            <label class="form-label">Request Body</label>
+                            <textarea class="form-control" id="similarity-body-input" rows="5">{
+  "text": "Paris is the capital of France",
+  "top_k": 5
+}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="sendRequest('POST', '/query/similarity', 'similarity-body-input', 'similarity-response')">Send Request</button>
+                        <div class="mt-3">
+                            <h5>Response</h5>
+                            <pre class="response-container"><code class="language-json" id="similarity-response"></code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <h2 class="mt-4 mb-3">Administration</h2>
+                
+                <!-- Health Check Endpoint -->
+                <div class="card endpoint-card">
+                    <div class="card-header endpoint-header bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#health-body">
+                        <div>
+                            <span class="badge method-badge get">GET</span>
+                            <span>/health</span>
+                        </div>
+                        <span>Health check</span>
+                    </div>
+                    <div id="health-body" class="collapse endpoint-body">
+                        <button class="btn btn-primary" onclick="sendRequest('GET', '/health', null, 'health-response')">Send Request</button>
+                        <div class="mt-3">
+                            <h5>Response</h5>
+                            <pre class="response-container"><code class="language-json" id="health-response"></code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Status Endpoint -->
+                <div class="card endpoint-card">
+                    <div class="card-header endpoint-header bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#status-body">
+                        <div>
+                            <span class="badge method-badge get">GET</span>
+                            <span>/admin/status</span>
+                        </div>
+                        <span>System status</span>
+                    </div>
+                    <div id="status-body" class="collapse endpoint-body">
+                        <button class="btn btn-primary" onclick="sendRequest('GET', '/admin/status', null, 'status-response')">Send Request</button>
+                        <div class="mt-3">
+                            <h5>Response</h5>
+                            <pre class="response-container"><code class="language-json" id="status-response"></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- WebSocket API Tab -->
+            <div class="tab-pane fade" id="websocket" role="tabpanel" aria-labelledby="websocket-tab">
+                <div class="websocket-container">
+                    <h3>WebSocket Connection</h3>
+                    <div class="mb-3">
+                        <label for="ws-url" class="form-label">WebSocket URL</label>
+                        <input type="text" class="form-control" id="ws-url" value="ws://localhost:8000/ws/">
+                    </div>
+                    <div class="mb-3">
+                        <label for="client-id" class="form-label">Client ID</label>
+                        <input type="text" class="form-control" id="client-id" placeholder="Leave empty for random ID">
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-primary" id="ws-connect-btn">Connect</button>
+                        <button class="btn btn-danger" id="ws-disconnect-btn" disabled>Disconnect</button>
+                    </div>
+                    <div class="websocket-log" id="ws-log"></div>
+                    
+                    <h3>Send Message</h3>
+                    <div class="mb-3">
+                        <label for="ws-message-type" class="form-label">Message Type</label>
+                        <select class="form-select" id="ws-message-type">
+                            <option value="query">Query</option>
+                            <option value="subscribe">Subscribe</option>
+                            <option value="unsubscribe">Unsubscribe</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ws-message-payload" class="form-label">Message Payload</label>
+                        <textarea class="form-control" id="ws-message-payload" rows="5">{
+  "query": "What is the capital of France?",
+  "stream": true
+}</textarea>
+                    </div>
+                    <button class="btn btn-primary" id="ws-send-btn" disabled>Send Message</button>
+                </div>
+                
+                <h3>Example Messages</h3>
+                
+                <div class="accordion" id="ws-examples">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-query">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-query" aria-expanded="false" aria-controls="collapse-query">
+                                Query Example
+                            </button>
+                        </h2>
+                        <div id="collapse-query" class="accordion-collapse collapse" aria-labelledby="heading-query" data-bs-parent="#ws-examples">
+                            <div class="accordion-body">
+                                <pre><code class="language-json">{
+  "request_id": "query-1",
+  "request_type": "query",
+  "payload": {
+    "query": "What is the capital of France?",
+    "top_k": 5,
+    "stream": false
+  }
+}</code></pre>
+                                <button class="btn btn-sm btn-primary" onclick="useExample('query')">Use This Example</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-stream">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-stream" aria-expanded="false" aria-controls="collapse-stream">
+                                Streaming Query Example
+                            </button>
+                        </h2>
+                        <div id="collapse-stream" class="accordion-collapse collapse" aria-labelledby="heading-stream" data-bs-parent="#ws-examples">
+                            <div class="accordion-body">
+                                <pre><code class="language-json">{
+  "request_id": "query-2",
+  "request_type": "query",
+  "payload": {
+    "query": "What is the capital of France?",
+    "stream": true
+  }
+}</code></pre>
+                                <button class="btn btn-sm btn-primary" onclick="useExample('stream')">Use This Example</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-subscribe">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-subscribe" aria-expanded="false" aria-controls="collapse-subscribe">
+                                Subscribe Example
+                            </button>
+                        </h2>
+                        <div id="collapse-subscribe" class="accordion-collapse collapse" aria-labelledby="heading-subscribe" data-bs-parent="#ws-examples">
+                            <div class="accordion-body">
+                                <pre><code class="language-json">{
+  "request_id": "sub-1",
+  "request_type": "subscribe",
+  "payload": {
+    "topic": "system_status"
+  }
+}</code></pre>
+                                <button class="btn btn-sm btn-primary" onclick="useExample('subscribe')">Use This Example</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-unsubscribe">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-unsubscribe" aria-expanded="false" aria-controls="collapse-unsubscribe">
+                                Unsubscribe Example
+                            </button>
+                        </h2>
+                        <div id="collapse-unsubscribe" class="accordion-collapse collapse" aria-labelledby="heading-unsubscribe" data-bs-parent="#ws-examples">
+                            <div class="accordion-body">
+                                <pre><code class="language-json">{
+  "request_id": "unsub-1",
+  "request_type": "unsubscribe",
+  "payload": {
+    "topic": "system_status"
+  }
+}</code></pre>
+                                <button class="btn btn-sm btn-primary" onclick="useExample('unsubscribe')">Use This Example</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+    
+    <script>
+        // REST API Functions
+        async function sendRequest(method, endpoint, bodyElementId, responseElementId) {
+            const baseUrl = document.getElementById('base-url').value;
+            const apiKey = document.getElementById('api-key').value;
+            const bearerToken = document.getElementById('bearer-token').value;
+            
+            const url = baseUrl + endpoint;
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (apiKey) {
+                headers['X-API-Key'] = apiKey;
+            }
+            
+            if (bearerToken) {
+                headers['Authorization'] = `Bearer ${bearerToken}`;
+            }
+            
+            const options = {
+                method: method,
+                headers: headers
+            };
+            
+            if (bodyElementId && method !== 'GET') {
+                const bodyElement = document.getElementById(bodyElementId);
+                if (bodyElement) {
+                    options.body = bodyElement.value;
+                }
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                const responseElement = document.getElementById(responseElementId);
+                responseElement.textContent = JSON.stringify(data, null, 2);
+                Prism.highlightElement(responseElement);
+            } catch (error) {
+                const responseElement = document.getElementById(responseElementId);
+                responseElement.textContent = `Error: ${error.message}`;
+                Prism.highlightElement(responseElement);
+            }
+        }
+        
+        async function sendRequestWithPathParam(method, endpoint, paramElementId, bodyElementId, responseElementId) {
+            const paramElement = document.getElementById(paramElementId);
+            if (!paramElement || !paramElement.value) {
+                alert('Please enter a valid parameter value');
+                return;
+            }
+            
+            const fullEndpoint = endpoint + paramElement.value;
+            await sendRequest(method, fullEndpoint, bodyElementId, responseElementId);
+        }
+        
+        // WebSocket Functions
+        let websocket = null;
+        
+        function generateClientId() {
+            return 'client_' + Math.random().toString(36).substring(2, 15);
+        }
+        
+        function addLogEntry(message, type) {
+            const logElement = document.getElementById('ws-log');
+            const entryElement = document.createElement('div');
+            entryElement.className = `log-entry log-${type}`;
+            entryElement.textContent = message;
+            logElement.appendChild(entryElement);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        document.getElementById('ws-connect-btn').addEventListener('click', () => {
+            const wsUrl = document.getElementById('ws-url').value;
+            let clientId = document.getElementById('client-id').value;
+            
+            if (!clientId) {
+                clientId = generateClientId();
+                document.getElementById('client-id').value = clientId;
+            }
+            
+            const fullUrl = wsUrl + clientId;
+            
+            try {
+                websocket = new WebSocket(fullUrl);
+                
+                websocket.onopen = () => {
+                    addLogEntry(`Connected to ${fullUrl}`, 'info');
+                    document.getElementById('ws-connect-btn').disabled = true;
+                    document.getElementById('ws-disconnect-btn').disabled = false;
+                    document.getElementById('ws-send-btn').disabled = false;
+                };
+                
+                websocket.onclose = () => {
+                    addLogEntry('Disconnected from WebSocket server', 'info');
+                    document.getElementById('ws-connect-btn').disabled = false;
+                    document.getElementById('ws-disconnect-btn').disabled = true;
+                    document.getElementById('ws-send-btn').disabled = true;
+                    websocket = null;
+                };
+                
+                websocket.onerror = (error) => {
+                    addLogEntry(`WebSocket error: ${error.message || 'Connection failed'}`, 'error');
+                };
+                
+                websocket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addLogEntry(`Received: ${JSON.stringify(data, null, 2)}`, 'received');
+                    } catch (error) {
+                        addLogEntry(`Received (non-JSON): ${event.data}`, 'received');
+                    }
+                };
+            } catch (error) {
+                addLogEntry(`Error creating WebSocket: ${error.message}`, 'error');
+            }
+        });
+        
+        document.getElementById('ws-disconnect-btn').addEventListener('click', () => {
+            if (websocket) {
+                websocket.close();
+            }
+        });
+        
+        document.getElementById('ws-send-btn').addEventListener('click', () => {
+            if (!websocket) {
+                addLogEntry('Not connected to WebSocket server', 'error');
+                return;
+            }
+            
+            const messageType = document.getElementById('ws-message-type').value;
+            const payloadText = document.getElementById('ws-message-payload').value;
+            
+            try {
+                const payload = JSON.parse(payloadText);
+                const message = {
+                    request_id: `${messageType}-${Date.now()}`,
+                    request_type: messageType,
+                    payload: payload
+                };
+                
+                websocket.send(JSON.stringify(message));
+                addLogEntry(`Sent: ${JSON.stringify(message, null, 2)}`, 'sent');
+            } catch (error) {
+                addLogEntry(`Error sending message: ${error.message}`, 'error');
+            }
+        });
+        
+        function useExample(type) {
+            const messageTypeElement = document.getElementById('ws-message-type');
+            const payloadElement = document.getElementById('ws-message-payload');
+            
+            switch (type) {
+                case 'query':
+                    messageTypeElement.value = 'query';
+                    payloadElement.value = JSON.stringify({
+                        query: "What is the capital of France?",
+                        top_k: 5,
+                        stream: false
+                    }, null, 2);
+                    break;
+                case 'stream':
+                    messageTypeElement.value = 'query';
+                    payloadElement.value = JSON.stringify({
+                        query: "What is the capital of France?",
+                        stream: true
+                    }, null, 2);
+                    break;
+                case 'subscribe':
+                    messageTypeElement.value = 'subscribe';
+                    payloadElement.value = JSON.stringify({
+                        topic: "system_status"
+                    }, null, 2);
+                    break;
+                case 'unsubscribe':
+                    messageTypeElement.value = 'unsubscribe';
+                    payloadElement.value = JSON.stringify({
+                        topic: "system_status"
+                    }, null, 2);
+                    break;
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Generate random client ID
+            document.getElementById('client-id').value = generateClientId();
+            
+            // Set up collapsible endpoint cards
+            document.querySelectorAll('.endpoint-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const target = header.getAttribute('data-bs-target');
+                    const body = document.querySelector(target);
+                    if (body) {
+                        body.classList.toggle('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "start_time": "2025-07-19T21:46:51.962654",
+    "end_time": "2025-07-19T21:46:59.193453",
+    "total_tests": 0,
+    "passed_tests": 0,
+    "failed_tests": 0,
+    "skipped_tests": 0,
+    "coverage": 0.0,
+    "requirements_met": {
+      "11.1": false,
+      "11.2": true,
+      "11.3": true,
+      "11.4": true
+    },
+    "all_requirements_met": false
+  },
+  "test_suites": {
+    "all": {
+      "stdout": "py311: skipped because could not find python interpreter with spec(s): py311\n  py311: SKIP (0.26 seconds)\n  evaluation failed :( (0.37 seconds)\n",
+      "stderr": "",
+      "returncode": 255
+    },
+    "unit": {
+      "stdout": "No test files found in tests/unit",
+      "stderr": "",
+      "returncode": 0,
+      "passed": 0,
+      "skipped": 0,
+      "failed": 0,
+      "no_tests": true
+    },
+    "integration": {
+      "stdout": "No test files found in tests/integration",
+      "stderr": "",
+      "returncode": 0,
+      "passed": 0,
+      "skipped": 0,
+      "failed": 0,
+      "no_tests": true
+    },
+    "end_to_end": {
+      "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.13.2, pytest-8.4.0, pluggy-1.6.0 -- /Users/costalong/anaconda3/envs/langgraph-trans/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/costalong/code/ai/translate-demo/translate_demo\nconfigfile: pyproject.toml\nplugins: anyio-4.9.0, asyncio-1.1.0, pylint-0.19.0, cov-4.1.0, langsmith-0.3.44\nasyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 0 items / 3 errors\n\n==================================== ERRORS ====================================\n_________ ERROR collecting tests/end_to_end/test_complete_workflow.py __________\nImportError while importing test module '/Users/costalong/code/ai/translate-demo/translate_demo/tests/end_to_end/test_complete_workflow.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../../../anaconda3/envs/langgraph-trans/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/end_to_end/test_complete_workflow.py:14: in <module>\n    from src.knowledge_base.api.server import create_app\nsrc/knowledge_base/api/__init__.py:7: in <module>\n    from .server import create_app, run_app, get_config, get_orchestrator, get_websocket_manager\nsrc/knowledge_base/api/server.py:21: in <module>\n    from src.knowledge_base.core.monitoring import get_monitoring_system, MonitoringSystem\nsrc/knowledge_base/core/monitoring.py:15: in <module>\n    import psutil\nE   ModuleNotFoundError: No module named 'psutil'\n___________ ERROR collecting tests/end_to_end/test_error_handling.py ___________\nImportError while importing test module '/Users/costalong/code/ai/translate-demo/translate_demo/tests/end_to_end/test_error_handling.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../../../anaconda3/envs/langgraph-trans/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/end_to_end/test_error_handling.py:14: in <module>\n    from src.knowledge_base.api.server import create_app\nsrc/knowledge_base/api/__init__.py:7: in <module>\n    from .server import create_app, run_app, get_config, get_orchestrator, get_websocket_manager\nsrc/knowledge_base/api/server.py:21: in <module>\n    from src.knowledge_base.core.monitoring import get_monitoring_system, MonitoringSystem\nsrc/knowledge_base/core/monitoring.py:15: in <module>\n    import psutil\nE   ModuleNotFoundError: No module named 'psutil'\n___________ ERROR collecting tests/end_to_end/test_user_scenarios.py ___________\nImportError while importing test module '/Users/costalong/code/ai/translate-demo/translate_demo/tests/end_to_end/test_user_scenarios.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../../../anaconda3/envs/langgraph-trans/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/end_to_end/test_user_scenarios.py:14: in <module>\n    from src.knowledge_base.api.server import create_app\nsrc/knowledge_base/api/__init__.py:7: in <module>\n    from .server import create_app, run_app, get_config, get_orchestrator, get_websocket_manager\nsrc/knowledge_base/api/server.py:21: in <module>\n    from src.knowledge_base.core.monitoring import get_monitoring_system, MonitoringSystem\nsrc/knowledge_base/core/monitoring.py:15: in <module>\n    import psutil\nE   ModuleNotFoundError: No module named 'psutil'\n=========================== short test summary info ============================\nERROR tests/end_to_end/test_complete_workflow.py\nERROR tests/end_to_end/test_error_handling.py\nERROR tests/end_to_end/test_user_scenarios.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!\n============================== 3 errors in 0.24s ===============================\n",
+      "stderr": "",
+      "returncode": 2,
+      "passed": 0,
+      "skipped": 0,
+      "failed": 0
+    },
+    "performance": {
+      "stdout": "",
+      "stderr": "Error registering built-in providers: cannot import name 'Chunk' from 'src.knowledge_base.core.types' (/Users/costalong/code/ai/translate-demo/translate_demo/src/knowledge_base/core/types.py)\nImportError while loading conftest '/Users/costalong/code/ai/translate-demo/translate_demo/tests/performance/conftest.py'.\ntests/performance/conftest.py:16: in <module>\n    from src.knowledge_base.storage.providers.memory import MemoryVectorStore\nsrc/knowledge_base/storage/providers/memory.py:18: in <module>\n    from ...core.types import Chunk, Vector\nE   ImportError: cannot import name 'Chunk' from 'src.knowledge_base.core.types' (/Users/costalong/code/ai/translate-demo/translate_demo/src/knowledge_base/core/types.py)\n",
+      "returncode": 4,
+      "passed": 0,
+      "skipped": 0,
+      "failed": 0
+    },
+    "manual": {
+      "tests": [
+        {
+          "name": "tests/manual_test_context_manager.py",
+          "stdout": "Testing ContextManager...\nCreated conversation with ID: 6e170d78-fda6-4960-8415-05087ab348b1\nAdded turn 1: What is the capital of France?\nUpdated turn 1 with answer: The capital of France is Paris.\nAdded turn 2: What is its population?\nGot context with 2 turns (compressed: False)\n  Turn 1: What is the capital of France? -> The capital of France is Paris.\n  Turn 2: What is its population? -> None\nGot compressed context with 1 turns (compressed: True)\n  Turn 1: What is its population? -> None\nSaved conversation to /var/folders/j5/3m8nd8117kd6x34l9bcgvc400000gn/T/tmpdr05u00r\nLoaded conversation with ID: 6e170d78-fda6-4960-8415-05087ab348b1\nLoaded conversation has 2 turns\nTest completed successfully!\n",
+          "stderr": "Error registering built-in providers: cannot import name 'Chunk' from 'src.knowledge_base.core.types' (/Users/costalong/code/ai/translate-demo/translate_demo/src/knowledge_base/core/types.py)\n",
+          "returncode": 0,
+          "status": "passed"
+        },
+        {
+          "name": "tests/standalone_test_context_manager.py",
+          "stdout": "Testing ContextManager...\nCreated conversation with ID: 96eb183d-7e4f-4395-991a-85e7c0d0eab5\nAdded turn 1: What is the capital of France?\nUpdated turn 1 with answer: The capital of France is Paris.\nAdded turn 2: What is its population?\nGot context with 2 turns (compressed: False)\n  Turn 1: What is the capital of France? -> The capital of France is Paris.\n  Turn 2: What is its population? -> None\nGot compressed context with 1 turns (compressed: True)\n  Turn 1: What is its population? -> None\nSaved conversation to /var/folders/j5/3m8nd8117kd6x34l9bcgvc400000gn/T/tmpddq6vjjm\nLoaded conversation with ID: 96eb183d-7e4f-4395-991a-85e7c0d0eab5\nLoaded conversation has 2 turns\nTest completed successfully!\n",
+          "stderr": "",
+          "returncode": 0,
+          "status": "passed"
+        }
+      ]
+    }
+  }
+}

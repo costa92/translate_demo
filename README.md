@@ -1,160 +1,131 @@
-# Translate Demo
+# Unified Knowledge Base System
 
-一个多语言翻译演示项目，基于大型语言模型（LLM），支持多种 LLM 提供商（OpenAI、DeepSeek、Ollama 等），并集成 LangChain 工具、智能体（Agent）、命令行和语音合成功能。
+A comprehensive knowledge management system that combines document storage, processing, retrieval, and generation capabilities in a cohesive platform. The system integrates a layered architecture with a multi-agent system to provide powerful knowledge management capabilities.
 
-## 项目目标
+## Features
 
-- 提供高质量的文本翻译，支持多语言、多 LLM 后端
-- 以 LangChain 工具/Agent 形式集成，便于扩展和二次开发
-- 支持命令行一键翻译和语音合成
+- **Multiple Storage Backends**: Support for in-memory, Notion, vector databases, and cloud storage
+- **Flexible Document Processing**: Multiple chunking strategies and metadata extraction
+- **Advanced Retrieval**: Semantic, keyword, and hybrid search with reranking
+- **High-Quality Generation**: Support for multiple LLM providers with streaming responses
+- **Multi-Agent Architecture**: Specialized agents for different aspects of knowledge management
+- **Comprehensive API**: RESTful and WebSocket APIs for integration
 
-## 技术栈
+## Documentation
 
-- **Python 3.11+**
-- **LangChain**（核心 LLM 框架）
-- **FastAPI**（可选，API 服务）
-- **Click**（命令行接口）
-- **Dynaconf**（配置管理）
-- **gTTS**（文字转语音）
-- **pytest**（测试）
-- **Poetry**（依赖管理）
+### User Documentation
 
-## 支持的 LLM 提供商
+- [User Guide](docs/user_guide.md): Comprehensive guide to using the system
+- [Quick Start Tutorial](docs/quick_start_tutorial.md): Step-by-step guide to getting started
+- [Configuration Guide](docs/configuration_guide.md): Detailed information on configuration options
+- [Best Practices Guide](docs/best_practices_guide.md): Recommendations for effective use
+- [Troubleshooting Guide](docs/troubleshooting_guide.md): Solutions to common issues
 
-- OpenAI（GPT-3.5, GPT-4, GPT-4o 等）
-- DeepSeek
-- Ollama（本地大模型）
+### Technical Documentation
 
-## 项目结构
+- [Architecture](docs/architecture.md): System architecture and design decisions
+- [API Reference](docs/api_reference.md): Detailed API documentation
+- [Developer Guide](docs/developer_guide.md): Guide for developers extending the system
 
-```bash
-src/
-├── llm_core/          # LLM核心抽象层和工厂
-│   ├── base.py        # 基础抽象类
-│   ├── factory.py     # 工厂类
-│   ├── config.py      # 配置管理
-│   ├── ollama/        # Ollama实现
-│   ├── deepseek/      # DeepSeek实现
-│   └── ...
-├── tools/             # 工具集
-│   ├── translate/     # 翻译工具
-│   └── text_to_speech/# 文字转语音工具
-├── agents/            # 智能体
-│   └── TranslatorAgent.py
-└── translate_demo/    # 主应用（命令行、API等）
-    ├── cmd.py         # CLI 入口
-    ├── config/        # 应用配置
-    └── log.py         # 日志配置
-```
-
-## 安装与依赖管理
-
-推荐使用 Poetry：
+## Installation
 
 ```bash
-pip install poetry
-poetry install
+pip install unified-knowledge-base
 ```
 
-或直接安装包：
+Or install from source:
 
 ```bash
-pip install translate_demo
+git clone https://github.com/yourusername/unified-knowledge-base.git
+cd unified-knowledge-base
+pip install -e .
 ```
 
-## 快速开始
-
-### 1. 命令行翻译
-
-```bash
-poetry run translate
-# 或
-translate
-```
-
-### 2. 代码调用
+## Quick Example
 
 ```python
-from llm_core import LLMFactory
-from tools.translate.translate import translate
+from src.knowledge_base import KnowledgeBase
+from src.knowledge_base.core.config import Config
 
-llm = LLMFactory.create("openai", model="gpt-4o", api_key="your-api-key")
-result = translate(llm, "Hello, world!", "en", "zh")
-print(result)
+# Initialize the knowledge base
+config = Config()
+kb = KnowledgeBase(config)
+
+# Add a document
+result = kb.add_document(
+    content="This is a sample document for the knowledge base.",
+    metadata={"title": "Sample Document", "source": "example"}
+)
+print(f"Added document with ID: {result.document_id}")
+
+# Query the knowledge base
+result = kb.query("What is in the sample document?")
+print(f"Answer: {result.answer}")
+print(f"Sources: {result.chunks}")
 ```
 
-### 3. 异步翻译
+## API Server
 
-```python
-from tools.translate.translate import translate_async
-import asyncio
-
-async def main():
-    llm = LLMFactory.create("openai", model="gpt-4o", api_key="your-api-key")
-    result = await translate_async(llm, "Hello, world!", "en", "zh")
-    print(result)
-
-asyncio.run(main())
-```
-
-### 4. 智能体（Agent）调用
-
-```python
-from agents.TranslatorAgent import TranslatorAgent
-llm = LLMFactory.create("openai", model="gpt-4o", api_key="your-api-key")
-agent = TranslatorAgent(llm)
-print(agent.translate("I like you, but I don't know you", "Chinese"))
-```
-
-### 5. 文字转语音
-
-```python
-from tools.text_to_speech.tts_tool import TextToSpeechTool
-
-text = "你好，世界！"
-tts_tool = TextToSpeechTool()
-audio_path = tts_tool._run(text=text, language="zh", output_path="output.mp3")
-print(f"音频文件已生成: {audio_path}")
-```
-
-## 配置说明
-
-- 推荐通过环境变量或 `src/translate_demo/config/settings.yml` 配置参数。
-- LLM 相关密钥可通过环境变量传递：
+Start the API server:
 
 ```bash
-export OPENAI_API_KEY="your-openai-api-key"
-export DEEPSEEK_API_KEY="your-deepseek-api-key"
+python -m src.knowledge_base.api.server
 ```
 
-- 其他参数（如模型名、host/port）可在 `settings.yml` 或环境变量中设置。
+Access the API documentation at http://localhost:8000/docs
 
-## 典型应用场景
+## Docker Deployment
 
-- 文档国际化与本地化
-- 跨语言交流
-- 语言学习辅助
-- 语音播报
+The system can be easily deployed using Docker:
 
-## 开发规范
+### Using docker-compose
 
-- 代码需类型注解，注释清晰，遵循 PEP8
-- 单元测试覆盖核心逻辑，推荐使用 pytest
-- 配置管理优先级：环境变量 > settings.yml > 默认值
+```bash
+# Build and start the containers
+docker-compose up -d
 
-## 项目状态
+# Stop the containers
+docker-compose down
+```
 
-本项目处于开发阶段，已实现多 LLM 后端、LangChain 工具/Agent、命令行和 TTS 等核心功能。
+### Using the convenience script
 
-## 贡献
+```bash
+# Build and start the containers
+./scripts/docker_deployment.sh
 
-欢迎 PR 与 Issue！
+# Stop the containers
+docker stop knowledge-base
+```
+
+The API will be available at http://localhost:8000 with documentation at http://localhost:8000/docs
+
+## Project Structure
+
+```
+src/knowledge_base/
+├── core/               # Core components and interfaces
+├── storage/            # Storage backends
+├── processing/         # Document processing
+├── retrieval/          # Search and retrieval
+├── generation/         # Response generation
+├── agents/             # Multi-agent system
+└── api/                # API server
+```
+
+## Examples
+
+Check out the `examples/` directory for more usage examples:
+
+- `examples/quick_start.py`: Basic usage of the knowledge base
+- `examples/api_server.py`: Starting the API server with custom configuration
+- `examples/multi_agent_system.py`: Using the multi-agent system
+- `examples/docker_deployment.sh`: Deploying with Docker
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-MIT
-
-## 参考文档
-
-- [LLM：Agent](https://www.drinkingfishingseeking.com/2025/02/20/llm-agent/)
-- [DeepSeek 模型微调](https://zhuanlan.zhihu.com/p/17628689019)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

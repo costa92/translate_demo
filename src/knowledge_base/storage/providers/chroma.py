@@ -15,6 +15,7 @@ import logging
 import uuid
 import os
 from typing import List, Dict, Any, Optional, Tuple, Union, cast
+from collections import defaultdict
 
 from ...core.types import Document, TextChunk
 from ...core.exceptions import (
@@ -25,6 +26,14 @@ from ...core.exceptions import (
     MissingConfigurationError
 )
 from ..base import BaseVectorStore
+from .utils import (
+    generate_uuid,
+    document_to_metadata,
+    chunk_to_metadata,
+    metadata_to_document,
+    metadata_to_chunk,
+    ensure_directory_exists
+)
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +86,7 @@ class ChromaVectorStore(BaseVectorStore):
         self._collection: Optional[Collection] = None
         
         # Document ID to chunk IDs mapping for efficient document deletion
-        self._document_chunks: Dict[str, List[str]] = {}
+        self._document_chunks: Dict[str, List[str]] = defaultdict(list)
         
         logger.info(f"ChromaVectorStore initialized with collection: {self.collection_name}")
     
@@ -100,7 +109,7 @@ class ChromaVectorStore(BaseVectorStore):
                 # Use persistent or in-memory client
                 settings = Settings()
                 if self.persist_directory:
-                    os.makedirs(self.persist_directory, exist_ok=True)
+                    ensure_directory_exists(self.persist_directory)
                     settings = Settings(
                         persist_directory=self.persist_directory,
                         anonymized_telemetry=False
@@ -126,6 +135,28 @@ class ChromaVectorStore(BaseVectorStore):
         except Exception as e:
             logger.error(f"Failed to initialize ChromaVectorStore: {e}")
             raise StorageConnectionError("chroma", str(e))
+    
+    async def _load_document_chunks_mapping(self) -> None:
+        """Load document to chunks mapping from the collection."""
+        try:
+            # Query for all chunks to build the document-chunks mapping
+            result = self._collection.get(
+                where={"type": "chunk"},
+                include=["metadatas"]
+            )
+            
+            # Build document-chunks mapping
+            self._document_chunks = defaultdict(list)
+            for i, chunk_id in enumerate(result["ids"]):
+                metadata = result["metadatas"][i]
+                document_id = metadata.get("document_id")
+                if document_id:
+                    self._document_chunks[document_id].append(chunk_id)
+            
+            logger.debug(f"Loaded document-chunks mapping for {len(self._document_chunks)} documents")
+            
+        except Exception as e:
+            logger.warning(f"Failed to load document-chunks mapping: {e}")
     
     async def add_texts(
         self, 
@@ -157,7 +188,7 @@ class ChromaVectorStore(BaseVectorStore):
         
         # Generate IDs if not provided
         if ids is None:
-            ids = [str(uuid.uuid4()) for _ in texts]
+            ids = [generate_uuid() for _ in texts]
         
         # Ensure metadatas list has correct length
         if metadatas is None:
@@ -169,8 +200,6 @@ class ChromaVectorStore(BaseVectorStore):
         for i, metadata in enumerate(metadatas):
             document_id = metadata.get("document_id")
             if document_id:
-                if document_id not in self._document_chunks:
-                    self._document_chunks[document_id] = []
                 self._document_chunks[document_id].append(ids[i])
         
         try:
@@ -212,39 +241,28 @@ class ChromaVectorStore(BaseVectorStore):
             return []
         
         try:
-            document_ids = []
+            texts = []
+            metadatas = []
+            ids = []
             
             for document in documents:
-                # Store document as a special entry with document metadata
-                doc_metadata = {
-                    "document_id": document.id,
-                    "type": "document",
-                    "document_type": document.type.value if hasattr(document.type, "value") else str(document.type),
-                    "source": document.source or "",
-                    "created_at": document.created_at.isoformat() if document.created_at else "",
-                }
-                
-                # Add any custom metadata
-                if document.metadata:
-                    for key, value in document.metadata.items():
-                        if key not in doc_metadata and isinstance(value, (str, int, float, bool)):
-                            doc_metadata[key] = value
-                
-                # Add document to collection
-                self._collection.add(
-                    documents=[document.content],
-                    metadatas=[doc_metadata],
-                    ids=[document.id]
-                )
-                
-                document_ids.append(document.id)
+                texts.append(document.content)
+                metadatas.append(document_to_metadata(document))
+                ids.append(document.id)
                 
                 # Initialize document-chunks mapping entry
                 if document.id not in self._document_chunks:
                     self._document_chunks[document.id] = []
             
+            # Add documents to collection
+            self._collection.add(
+                documents=texts,
+                metadatas=metadatas,
+                ids=ids
+            )
+            
             logger.info(f"Added {len(documents)} documents to ChromaDB collection")
-            return document_ids
+            return ids
             
         except Exception as e:
             logger.error(f"Failed to add documents to ChromaDB: {e}")
@@ -280,22 +298,7 @@ class ChromaVectorStore(BaseVectorStore):
             
             for chunk in chunks:
                 texts.append(chunk.text)
-                
-                # Prepare metadata
-                metadata = {
-                    "document_id": chunk.document_id,
-                    "type": "chunk",
-                    "start_index": chunk.start_index,
-                    "end_index": chunk.end_index,
-                }
-                
-                # Add any custom metadata
-                if chunk.metadata:
-                    for key, value in chunk.metadata.items():
-                        if key not in metadata and isinstance(value, (str, int, float, bool)):
-                            metadata[key] = value
-                
-                metadatas.append(metadata)
+                metadatas.append(chunk_to_metadata(chunk))
                 ids.append(chunk.id)
                 
                 # Add embedding if available
@@ -303,9 +306,8 @@ class ChromaVectorStore(BaseVectorStore):
                     embeddings.append(chunk.embedding)
                 
                 # Update document-chunks mapping
-                if chunk.document_id not in self._document_chunks:
-                    self._document_chunks[chunk.document_id] = []
-                self._document_chunks[chunk.document_id].append(chunk.id)
+                if chunk.document_id:
+                    self._document_chunks[chunk.document_id].append(chunk.id)
             
             # Add chunks to collection
             if embeddings and len(embeddings) == len(texts):
@@ -359,32 +361,8 @@ class ChromaVectorStore(BaseVectorStore):
             content = result["documents"][0]
             metadata = result["metadatas"][0]
             
-            # Parse document type
-            from ...core.types import DocumentType
-            try:
-                doc_type = DocumentType(metadata.get("document_type", "text"))
-            except ValueError:
-                doc_type = DocumentType.TEXT
-            
-            # Parse created_at
-            from datetime import datetime
-            created_at = datetime.now()
-            if "created_at" in metadata and metadata["created_at"]:
-                try:
-                    created_at = datetime.fromisoformat(metadata["created_at"].replace("Z", "+00:00"))
-                except ValueError:
-                    pass
-            
             # Create document object
-            from ...core.types import Document
-            document = Document(
-                id=document_id,
-                content=content,
-                type=doc_type,
-                source=metadata.get("source"),
-                metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "document_type", "source", "created_at"]},
-                created_at=created_at
-            )
+            document = metadata_to_document(document_id, content, metadata)
             
             return document
             
@@ -425,16 +403,7 @@ class ChromaVectorStore(BaseVectorStore):
             embedding = result["embeddings"][0] if result.get("embeddings") else None
             
             # Create chunk object
-            from ...core.types import TextChunk
-            chunk = TextChunk(
-                id=chunk_id,
-                text=text,
-                document_id=metadata.get("document_id", "unknown"),
-                metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index"]},
-                embedding=embedding,
-                start_index=metadata.get("start_index", 0),
-                end_index=metadata.get("end_index", len(text))
-            )
+            chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
             
             return chunk
             
@@ -479,17 +448,7 @@ class ChromaVectorStore(BaseVectorStore):
                 embedding = result["embeddings"][i] if result.get("embeddings") else None
                 
                 # Create chunk object
-                from ...core.types import TextChunk
-                chunk = TextChunk(
-                    id=chunk_id,
-                    text=text,
-                    document_id=metadata.get("document_id", "unknown"),
-                    metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index"]},
-                    embedding=embedding,
-                    start_index=metadata.get("start_index", 0),
-                    end_index=metadata.get("end_index", len(text))
-                )
-                
+                chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
                 chunks.append(chunk)
             
             return chunks
@@ -559,16 +518,7 @@ class ChromaVectorStore(BaseVectorStore):
                 similarity = 1.0 - min(1.0, max(0.0, distance))
                 
                 # Create chunk object
-                from ...core.types import TextChunk
-                chunk = TextChunk(
-                    id=chunk_id,
-                    text=text,
-                    document_id=metadata.get("document_id", "unknown"),
-                    metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index"]},
-                    embedding=embedding,
-                    start_index=metadata.get("start_index", 0),
-                    end_index=metadata.get("end_index", len(text))
-                )
+                chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
                 
                 chunks_with_scores.append((chunk, similarity))
             
@@ -633,16 +583,7 @@ class ChromaVectorStore(BaseVectorStore):
                 # Only include results with at least one matching term
                 if score > 0:
                     # Create chunk object
-                    from ...core.types import TextChunk
-                    chunk = TextChunk(
-                        id=chunk_id,
-                        text=text,
-                        document_id=metadata.get("document_id", "unknown"),
-                        metadata={k: v for k, v in metadata.items() if k not in ["document_id", "type", "start_index", "end_index"]},
-                        embedding=embedding,
-                        start_index=metadata.get("start_index", 0),
-                        end_index=metadata.get("end_index", len(text))
-                    )
+                    chunk = metadata_to_chunk(chunk_id, text, metadata, embedding)
                     
                     chunks_with_scores.append((chunk, score))
             
@@ -811,8 +752,8 @@ class ChromaVectorStore(BaseVectorStore):
                 "document_count": document_count,
                 "chunk_count": chunk_count,
                 "collection_name": self.collection_name,
-                "persist_directory": self.persist_directory or "in-memory",
-                "document_ids": list(self._document_chunks.keys())
+                "persist_directory": self.persist_directory,
+                "provider": "chroma"
             }
             
         except Exception as e:
@@ -833,17 +774,18 @@ class ChromaVectorStore(BaseVectorStore):
             await self.initialize()
         
         try:
-            # Delete collection and recreate it
-            self._client.delete_collection(self.collection_name)
-            self._collection = self._client.create_collection(
-                name=self.collection_name,
-                metadata={"description": "Knowledge base collection"}
-            )
+            # Get all IDs
+            result = self._collection.get()
+            ids = result["ids"]
+            
+            if ids:
+                # Delete all entries
+                self._collection.delete(ids=ids)
             
             # Clear document-chunks mapping
             self._document_chunks.clear()
             
-            logger.info(f"Cleared ChromaDB collection {self.collection_name}")
+            logger.info(f"Cleared all data from ChromaDB collection {self.collection_name}")
             return True
             
         except Exception as e:
@@ -857,42 +799,16 @@ class ChromaVectorStore(BaseVectorStore):
         Raises:
             StorageError: If closing fails
         """
-        if not self._initialized:
-            return
-        
         try:
             # ChromaDB doesn't have an explicit close method
-            # But we can reset our state
-            self._collection = None
+            # Just reset our instance variables
             self._client = None
+            self._collection = None
+            self._document_chunks.clear()
             self._initialized = False
             
-            logger.info("ChromaVectorStore closed")
+            logger.info("Closed ChromaVectorStore connection")
             
         except Exception as e:
             logger.error(f"Error closing ChromaVectorStore: {e}")
             raise StorageError(f"Error closing ChromaVectorStore: {e}", operation="close", provider="chroma")
-    
-    async def _load_document_chunks_mapping(self) -> None:
-        """Load document to chunks mapping from the collection."""
-        try:
-            # Get all chunks
-            result = self._collection.get(
-                where={"type": "chunk"},
-                include=["metadatas"]
-            )
-            
-            # Build document-chunks mapping
-            self._document_chunks = {}
-            for i, chunk_id in enumerate(result["ids"]):
-                document_id = result["metadatas"][i].get("document_id")
-                if document_id:
-                    if document_id not in self._document_chunks:
-                        self._document_chunks[document_id] = []
-                    self._document_chunks[document_id].append(chunk_id)
-            
-            logger.debug(f"Loaded document-chunks mapping with {len(self._document_chunks)} documents")
-            
-        except Exception as e:
-            logger.warning(f"Failed to load document-chunks mapping: {e}")
-            self._document_chunks = {}

@@ -21,6 +21,7 @@ from typing import Dict, Any, Optional, List, Union, Set, Callable, Type, TypeVa
 from dataclasses import dataclass, field, asdict, fields, is_dataclass, MISSING
 
 from .exceptions import ConfigurationError
+from .config_monitoring import MonitoringConfig
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,13 @@ class ChunkingConfig:
     max_chunk_size: int = 2000
     chunk_by_tokens: bool = False
     token_model: Optional[str] = None
+    
+    # Metadata extraction settings
+    extract_metadata: bool = True
+    generate_automatic_metadata: bool = True
+    index_metadata: bool = True
+    metadata_fields_to_extract: List[str] = field(default_factory=list)
+    metadata_fields_to_index: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -140,6 +148,7 @@ class RetrievalConfig:
     # Caching
     cache_enabled: bool = True
     cache_ttl: int = 3600  # seconds
+    cache_size: int = 1000  # maximum number of entries
 
 
 @dataclass
@@ -164,12 +173,22 @@ class GenerationConfig:
     include_sources: bool = True
     language: str = "auto"
     
+    # Prompt template settings
+    template_id: str = "default_rag"  # ID of the template to use
+    prompt_template: Optional[str] = None  # Legacy direct template string
+    prompt_templates: Dict[str, str] = field(default_factory=dict)  # Dictionary of template ID to template string
+    template_directory: Optional[str] = None  # Directory containing template files
+    
     # Streaming
     stream: bool = False
     
     # Quality control
     filter_content: bool = True
     validate_answers: bool = True
+    filter_level: str = "medium"  # none, low, medium, high
+    quality_assessor: str = "simple"  # simple, llm
+    quality_threshold: float = 0.5  # Minimum quality score (0.0-1.0) for acceptance
+    improve_answers: bool = True  # Whether to attempt to improve low-quality answers
     
     # Fallback settings
     fallback_provider: Optional[str] = None
@@ -198,6 +217,16 @@ class AgentsConfig:
     # Maintenance settings
     maintenance_interval: int = 86400  # 24 hours in seconds
     maintenance_time: str = "03:00"  # 3 AM
+    
+    # Specialized agents configuration
+    specialized_agents: Dict[str, bool] = field(default_factory=lambda: {
+        "collection": True,
+        "processing": True,
+        "storage": True,
+        "retrieval": True,
+        "maintenance": True,
+        "rag": True
+    })
 
 
 @dataclass
@@ -240,6 +269,7 @@ class Config:
     generation: GenerationConfig = field(default_factory=GenerationConfig)
     agents: AgentsConfig = field(default_factory=AgentsConfig)
     api: APIConfig = field(default_factory=APIConfig)
+    monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
     
     def __init__(
         self,
@@ -257,6 +287,7 @@ class Config:
         self.generation = GenerationConfig()
         self.agents = AgentsConfig()
         self.api = APIConfig()
+        self.monitoring = MonitoringConfig()
         
         # Load from file if provided
         if config_path:
@@ -720,6 +751,12 @@ class Config:
         
         if self.agents.maintenance_interval <= 0:
             errors.append(f"Invalid maintenance_interval: {self.agents.maintenance_interval}. Must be positive")
+            
+        # Validate specialized_agents configuration
+        valid_agent_types = ["collection", "processing", "storage", "retrieval", "maintenance", "rag"]
+        for agent_type in self.agents.specialized_agents:
+            if agent_type not in valid_agent_types:
+                errors.append(f"Invalid specialized agent type: {agent_type}. Must be one of: {', '.join(valid_agent_types)}")
         
         # Validate maintenance_time format (HH:MM)
         if not re.match(r"^([01]\d|2[0-3]):([0-5]\d)$", self.agents.maintenance_time):
@@ -847,37 +884,6 @@ class Config:
         config.validate()
         
         return config
-                # Special case for KB_EMBEDDING_OPENAI_BASE_URL
-                config.embedding.openai_base_url = value
-            elif section == "system" and key_parts[1] == "max" and key_parts[2] == "workers":
-                # Special case for KB_SYSTEM_MAX_WORKERS
-                config.system.max_workers = value
-            elif section == "system" and key_parts[1] == "debug":
-                # Special case for KB_SYSTEM_DEBUG
-                config.system.debug = value
-            elif section == "retrieval" and key_parts[1] == "min" and key_parts[2] == "score":
-                # Special case for KB_RETRIEVAL_MIN_SCORE
-                config.retrieval.min_score = value
-            elif section == "api" and key_parts[1] == "cors" and key_parts[2] == "origins":
-                # Special case for KB_API_CORS_ORIGINS
-                config.api.cors_origins = value
-            elif section == "chunking" and key_parts[1] == "separators":
-                # Special case for KB_CHUNKING_SEPARATORS
-                config.chunking.separators = value
-            else:
-                # For other cases, use the default update mechanism
-                if len(key_parts) == 2:
-                    # Simple case: KB_SECTION_KEY
-                    setattr(getattr(config, section), key_parts[1], value)
-                elif len(key_parts) >= 3:
-                    # For nested settings, try to find the appropriate attribute
-                    try:
-                        if hasattr(getattr(config, section), f"{key_parts[1]}_{key_parts[2]}"):
-                            setattr(getattr(config, section), f"{key_parts[1]}_{key_parts[2]}", value)
-                        else:
-                            setattr(getattr(config, section), key_parts[-1], value)
-                    except AttributeError:
-                        logger.warning(f"Ignoring environment variable {env_var}: unknown attribute")
         
         # Validate the configuration
         config.validate()

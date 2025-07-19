@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一知识库系统 API 演示</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .query-box {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #query-input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+        }
+        #query-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        #query-button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .result h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .sources {
+            margin-top: 15px;
+        }
+        .source-item {
+            background-color: #fff;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>统一知识库系统 API 演示</h1>
+    
+    <div class="container">
+        <h2>查询知识库</h2>
+        <div class="query-box">
+            <input type="text" id="query-input" placeholder="输入你的问题..." value="统一知识库系统是什么？">
+            <button id="query-button">查询</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在处理查询...</p>
+        </div>
+        
+        <div class="result" id="result" style="display: none;">
+            <h3>回答</h3>
+            <div id="answer"></div>
+            
+            <div class="sources">
+                <h3>来源</h3>
+                <div id="sources-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('query-button').addEventListener('click', async function() {
+            const query = document.getElementById('query-input').value.trim();
+            if (!query) {
+                alert('请输入查询内容');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('http://localhost:8000/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 显示结果
+                document.getElementById('answer').textContent = data.answer;
+                
+                // 显示来源
+                const sourcesList = document.getElementById('sources-list');
+                sourcesList.innerHTML = '';
+                
+                if (data.chunks && data.chunks.length > 0) {
+                    data.chunks.forEach((chunk, index) => {
+                        const sourceItem = document.createElement('div');
+                        sourceItem.className = 'source-item';
+                        
+                        const sourceText = document.createElement('p');
+                        sourceText.textContent = chunk.text;
+                        
+                        const sourceMetadata = document.createElement('p');
+                        sourceMetadata.style.fontSize = '0.9em';
+                        sourceMetadata.style.color = '#666';
+                        
+                        if (chunk.metadata && chunk.metadata.source) {
+                            sourceMetadata.textContent = `来源: ${chunk.metadata.source}`;
+                        } else {
+                            sourceMetadata.textContent = `来源 #${index + 1}`;
+                        }
+                        
+                        sourceItem.appendChild(sourceText);
+                        sourceItem.appendChild(sourceMetadata);
+                        sourcesList.appendChild(sourceItem);
+                    });
+                } else {
+                    sourcesList.innerHTML = '<p>没有可用的来源</p>';
+                }
+                
+                // 显示结果区域
+                document.getElementById('result').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`查询失败: ${error.message}`);
+            } finally {
+                // 隐藏加载状态
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+        
+        // 按回车键触发查询
+        document.getElementById('query-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('query-button').click();
+            }
+        });
+    </script>
+</body>
+</html>

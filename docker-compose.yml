@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Knowledge Base API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: unified-knowledge-base:latest
+    container_name: knowledge-base-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - KB_SYSTEM_LOG_LEVEL=INFO
+      - KB_SYSTEM_DEBUG=false
+      - KB_API_HOST=0.0.0.0
+      - KB_API_PORT=8000
+      - KB_API_CORS_ORIGINS=["*"]
+      - KB_STORAGE_PROVIDER=memory
+      # Add your API keys and other configuration here
+      # - KB_GENERATION_API_KEY=your_api_key
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Vector Database (Chroma)
+  # Uncomment to enable
+  # chroma:
+  #   image: ghcr.io/chroma-core/chroma:latest
+  #   container_name: knowledge-base-chroma
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./data/chroma:/chroma/data
+  #   ports:
+  #     - "8001:8000"
+  #   environment:
+  #     - CHROMA_DB_IMPL=duckdb+parquet
+  #     - CHROMA_PERSIST_DIRECTORY=/chroma/data
+
+  # Optional: Ollama for local LLM support
+  # Uncomment to enable
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: knowledge-base-ollama
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./data/ollama:/root/.ollama
+  #   ports:
+  #     - "11434:11434"
+
+volumes:
+  data:
+    driver: local
+
+networks:
+  default:
+    name: knowledge-base-network
+    driver: bridge

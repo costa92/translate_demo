@@ -1,7 +1,19 @@
 """
-Processing providers for the knowledge base system.
+Provider implementations for the processing module.
 
-This module contains various processing provider implementations.
+This module contains implementations of various embedding providers.
 """
 
-# Import providers will be added as they are implemented
+from .sentence_transformers import SentenceTransformersEmbedder
+from .openai import OpenAIEmbedder
+from .deepseek import DeepSeekEmbedder
+from .siliconflow import SiliconFlowEmbedder
+from .simple import SimpleEmbedder
+
+__all__ = [
+    'SentenceTransformersEmbedder',
+    'OpenAIEmbedder',
+    'DeepSeekEmbedder',
+    'SiliconFlowEmbedder',
+    'SimpleEmbedder',
+]

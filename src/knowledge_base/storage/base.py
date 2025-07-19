@@ -330,44 +330,4 @@ class BaseVectorStore(ABC):
             pass
 
 
-class VectorStore:
-    """
-    Factory class for creating vector stores.
-    
-    This class provides methods for creating vector store instances based on
-    configuration settings.
-    """
-    
-    @staticmethod
-    def create(config: Dict[str, Any]) -> BaseVectorStore:
-        """
-        Create a vector store based on configuration.
-        
-        Args:
-            config: Configuration dictionary with storage settings
-            
-        Returns:
-            Initialized BaseVectorStore instance
-            
-        Raises:
-            ValueError: If the specified provider is unknown
-        """
-        provider = config.get("provider", "memory")
-        
-        if provider == "memory":
-            from .providers.memory import MemoryVectorStore
-            return MemoryVectorStore(config)
-        elif provider == "notion":
-            from .providers.notion import NotionVectorStore
-            return NotionVectorStore(config)
-        elif provider == "chroma":
-            from .providers.chroma import ChromaVectorStore
-            return ChromaVectorStore(config)
-        elif provider == "pinecone":
-            from .providers.pinecone import PineconeVectorStore
-            return PineconeVectorStore(config)
-        elif provider == "weaviate":
-            from .providers.weaviate import WeaviateVectorStore
-            return WeaviateVectorStore(config)
-        else:
-            raise ValueError(f"Unknown vector store provider: {provider}")
+# The VectorStore factory class has been moved to vector_store.py
