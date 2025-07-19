@@ -1,0 +1,35 @@
+[
+  {
+    "query": "摩尔定律是什么？它目前面临什么挑战？",
+    "answer": "I don't have enough information to answer that question.",
+    "sources": []
+  },
+  {
+    "query": "目前最先进的半导体制程是什么？",
+    "answer": "I don't have enough information to answer that question.",
+    "sources": []
+  },
+  {
+    "query": "有哪些主要类型的AI芯片？它们各有什么特点？",
+    "answer": "I don't have enough information to answer that question.",
+    "sources": []
+  },
+  {
+    "query": "比较碳化硅(SiC)和氮化镓(GaN)这两种半导体材料的特点和应用",
+    "answer": "I don't have enough information to answer that question.",
+    "sources": []
+  },
+  {
+    "query": "分析不同AI芯片架构的性能指标和优缺点",
+    "filter": {
+      "source": "technical"
+    },
+    "answer": "I don't have enough information to answer that question.",
+    "sources": []
+  },
+  {
+    "query": "根据当前半导体技术发展趋势，预测未来5年可能的突破点",
+    "answer": "I don't have enough information to answer that question.",
+    "sources": []
+  }
+]

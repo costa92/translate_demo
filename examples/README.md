@@ -52,7 +52,51 @@ Run the full API server with all features enabled:
 python api_server_example.py
 ```
 
-### 2. Storage Provider Examples
+### 2. Model Provider Examples
+
+#### DeepSeek
+
+Run the DeepSeek query demo:
+
+```bash
+python deepseek_query_demo.py
+```
+
+Advanced usage:
+
+```bash
+# 显示模型信息
+python deepseek_query_demo.py --info
+
+# 使用特定模型
+python deepseek_query_demo.py --model deepseek-coder
+
+# 跳过添加示例文档
+python deepseek_query_demo.py --skip-docs
+```
+
+#### SiliconFlow
+
+Run the SiliconFlow query demo:
+
+```bash
+python siliconflow_query_demo.py
+```
+
+Advanced usage:
+
+```bash
+# 显示模型信息
+python siliconflow_query_demo.py --info
+
+# 运行性能基准测试
+python siliconflow_query_demo.py --benchmark
+
+# 使用特定设备和精度
+python siliconflow_query_demo.py --device cuda --precision float16
+```
+
+### 3. Storage Provider Examples
 
 #### Google Cloud Storage (GCS)
 
