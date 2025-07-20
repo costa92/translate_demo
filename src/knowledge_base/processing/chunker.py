@@ -17,10 +17,14 @@ from .strategies.base import BaseChunker
 logger = logging.getLogger(__name__)
 
 
+class TextChunker:
+    """
+    Chunker class that provides an interface for text chunking operations.
+    It delegates the actual chunking to specific strategy implementations.
+    """
+    
 # For backward compatibility
 Chunker = TextChunker
-
-class TextChunker:
     """
     Chunker class that provides an interface for text chunking operations.
     It delegates the actual chunking to specific strategy implementations.

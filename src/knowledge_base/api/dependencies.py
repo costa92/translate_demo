@@ -6,9 +6,9 @@ This module provides dependency injection functions for the API server.
 
 from typing import Optional
 
-from src.knowledge_base.core.config import Config
-from src.knowledge_base.core.monitoring import MonitoringSystem, get_monitoring_system
-from src.knowledge_base.agents.orchestrator import OrchestratorAgent
+from knowledge_base.core.config import Config
+from knowledge_base.core.monitoring import MonitoringSystem, get_monitoring_system
+from knowledge_base.agents.orchestrator import OrchestratorAgent
 from .websocket.handler import WebSocketManager
 
 # Global variables for dependency injection
@@ -29,29 +29,31 @@ def get_config() -> Config:
     return _config
 
 
-def get_orchestrator() -> OrchestratorAgent:
+def get_orchestrator():
     """Get the orchestrator agent instance.
     
     Returns:
         The orchestrator agent instance.
     """
     if _orchestrator is None:
-        raise RuntimeError("Orchestrator agent not initialized")
+        import logging
+        logging.warning("Orchestrator agent not initialized, returning None")
     return _orchestrator
 
 
-def get_websocket_manager() -> WebSocketManager:
+def get_websocket_manager():
     """Get the WebSocket manager instance.
     
     Returns:
         The WebSocket manager instance.
     """
     if _websocket_manager is None:
-        raise RuntimeError("WebSocket manager not initialized")
+        import logging
+        logging.warning("WebSocket manager not initialized, returning None")
     return _websocket_manager
 
 
-def get_monitoring() -> MonitoringSystem:
+def get_monitoring():
     """Get the monitoring system instance.
     
     Returns:
@@ -60,7 +62,12 @@ def get_monitoring() -> MonitoringSystem:
     global _monitoring_system
     
     if _monitoring_system is None:
-        _monitoring_system = get_monitoring_system(_config)
+        import logging
+        logging.warning("Monitoring system not initialized, returning None")
+        try:
+            _monitoring_system = get_monitoring_system(_config)
+        except Exception as e:
+            logging.warning(f"Failed to initialize monitoring system: {e}")
     
     return _monitoring_system
 
@@ -76,11 +83,27 @@ def initialize_dependencies(config: Config) -> None:
     # Store config for dependency injection
     _config = config
     
-    # Initialize orchestrator agent
-    _orchestrator = OrchestratorAgent(config)
+    try:
+        # Try to initialize orchestrator agent
+        from knowledge_base.agents.orchestrator import OrchestratorAgent
+        _orchestrator = OrchestratorAgent(config)
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to initialize orchestrator agent: {e}")
+        _orchestrator = None
     
-    # Initialize monitoring system
-    _monitoring_system = get_monitoring_system(config)
+    try:
+        # Try to initialize monitoring system
+        _monitoring_system = get_monitoring_system(config)
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to initialize monitoring system: {e}")
+        _monitoring_system = None
     
-    # Initialize WebSocket manager
-    _websocket_manager = WebSocketManager(config, _orchestrator)
+    try:
+        # Try to initialize WebSocket manager
+        _websocket_manager = WebSocketManager(config, _orchestrator)
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to initialize WebSocket manager: {e}")
+        _websocket_manager = None

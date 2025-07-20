@@ -1,0 +1,141 @@
+# 知识库系统配置文件示例
+# 复制此文件为 config.yaml 并根据需要修改配置
+
+# 系统配置
+system:
+  debug: false
+  log_level: "INFO"
+  cache_enabled: true
+  cache_ttl: 3600
+  max_workers: 4
+
+# 存储配置
+storage:
+  provider: "memory"  # memory, chroma, pinecone, weaviate, notion
+  collection_name: "knowledge_base"
+  
+  # ChromaDB 配置（如果使用）
+  chroma_path: "./chroma_db"
+  
+  # Pinecone 配置（如果使用）
+  # pinecone_api_key: "your_pinecone_api_key"
+  # pinecone_environment: "us-west1-gcp"
+  
+  # Weaviate 配置（如果使用）
+  # weaviate_url: "http://localhost:8080"
+  # weaviate_api_key: "your_weaviate_api_key"
+  
+  # Notion 配置（如果使用）
+  # notion_api_key: "your_notion_api_key"
+  # notion_database_id: "your_database_id"
+
+# 嵌入模型配置
+embedding:
+  provider: "sentence_transformers"  # sentence_transformers, openai, deepseek, siliconflow
+  model: "all-MiniLM-L6-v2"
+  dimensions: 384
+  max_length: 512
+  batch_size: 32
+  device: "cpu"  # cpu, cuda, mps
+  
+  # OpenAI 配置（如果使用）
+  # openai_api_key: "your_openai_api_key"
+  # openai_base_url: "https://api.openai.com/v1"
+  
+  # DeepSeek 配置（如果使用）
+  # deepseek_api_key: "your_deepseek_api_key"
+  # deepseek_base_url: "https://api.deepseek.com"
+  
+  # SiliconFlow 配置（如果使用）
+  # siliconflow_api_key: "your_siliconflow_api_key"
+  # siliconflow_base_url: "https://api.siliconflow.cn"
+
+# 文本分块配置
+chunking:
+  strategy: "recursive"  # recursive, sentence, paragraph, fixed
+  chunk_size: 1000
+  chunk_overlap: 200
+  separators: ["\n\n", "\n", " ", ""]
+  language: "auto"
+  respect_sentence_boundary: true
+  min_chunk_size: 100
+  max_chunk_size: 2000
+
+# 检索配置
+retrieval:
+  strategy: "hybrid"  # semantic, keyword, hybrid
+  top_k: 5
+  min_score: 0.0
+  semantic_weight: 0.7
+  keyword_weight: 0.3
+  enable_reranking: false
+  max_context_length: 4000
+
+# 生成配置
+generation:
+  provider: "openai"  # openai, deepseek, siliconflow, ollama, simple
+  model: "gpt-3.5-turbo"
+  
+  # API 配置
+  # api_key: "your_api_key"
+  # base_url: "https://api.openai.com/v1"
+  
+  # 生成参数
+  temperature: 0.1
+  max_tokens: 1000
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+  
+  # 提示配置
+  include_sources: true
+  language: "auto"
+  
+  # 质量控制
+  filter_content: true
+  validate_answers: true
+  quality_threshold: 0.5
+
+# Agent 配置
+agents:
+  orchestrator_enabled: true
+  data_collection_enabled: true
+  knowledge_processing_enabled: true
+  knowledge_storage_enabled: true
+  knowledge_retrieval_enabled: true
+  knowledge_maintenance_enabled: true
+  rag_enabled: true
+
+# API 配置
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  
+  # CORS 配置
+  cors_origins: ["*"]
+  cors_allow_credentials: true
+  cors_allow_methods: ["*"]
+  cors_allow_headers: ["*"]
+  
+  # 认证配置
+  auth_enabled: false
+  auth_provider: "api_key"
+  api_key_header: "X-API-Key"
+  
+  # 限流配置
+  rate_limit_enabled: false
+  rate_limit_requests: 100
+  rate_limit_period: 60
+  
+  # 文档配置
+  docs_enabled: true
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+# 监控配置
+monitoring:
+  enabled: true
+  metrics_enabled: true
+  health_check_enabled: true
+  performance_tracking: true

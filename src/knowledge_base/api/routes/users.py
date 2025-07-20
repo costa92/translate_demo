@@ -10,9 +10,9 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel
 
-from src.knowledge_base.core.config import Config
-from src.knowledge_base.core.exceptions import AuthorizationError
-from src.knowledge_base.api.auth.store import AuthStore
+from knowledge_base.core.config import Config
+from knowledge_base.core.exceptions import AuthorizationError
+from knowledge_base.api.auth.store import AuthStore
 from src.knowledge_base.api.models.auth import (
     User, APIKey, Role, Permission,
     UserCreate, UserUpdate, APIKeyCreate, APIKeyResponse, UserResponse

@@ -1,0 +1,61 @@
+.input-box {
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.75rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s;
+}
+
+.input-textarea:focus {
+  outline: none;
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.input-textarea::placeholder {
+  color: #bfbfbf;
+}
+
+.input-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.input-tip {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .input-box {
+    padding: 0.75rem;
+  }
+  
+  .input-textarea {
+    min-height: 60px;
+  }
+  
+  .input-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+  
+  .input-tip {
+    align-self: flex-start;
+  }
+}

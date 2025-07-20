@@ -1,0 +1,131 @@
+.search-page {
+  width: 100%;
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.search-header h1 {
+  margin: 0;
+}
+
+.search-mode-toggle {
+  display: flex;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mode-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.mode-button.active {
+  background-color: #1890ff;
+  color: white;
+}
+
+.search-error {
+  background-color: #fff1f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.conversation-prompt {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.conversation-prompt p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.conversation-prompt-button {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.conversation-prompt-button:hover {
+  background-color: #40a9ff;
+}
+
+.search-sources {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.search-sources h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #666;
+}
+
+.sources-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.source-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.source-item:last-child {
+  border-bottom: none;
+}
+
+.source-origin {
+  background-color: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-header h1 {
+    margin-bottom: 1rem;
+  }
+  
+  .search-mode-toggle {
+    width: 100%;
+  }
+  
+  .mode-button {
+    flex: 1;
+    text-align: center;
+  }
+}

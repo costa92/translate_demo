@@ -1,0 +1,151 @@
+.home-page {
+  width: 100%;
+}
+
+.hero-section {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hero-section h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.hero-description {
+  font-size: 1.25rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.hero-search {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.features-section {
+  margin-bottom: 3rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.feature-card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.feature-card p {
+  margin-bottom: 1.5rem;
+  color: #666;
+}
+
+.recent-documents-section,
+.popular-searches-section {
+  margin-bottom: 3rem;
+}
+
+.recent-documents-section h2,
+.popular-searches-section h2 {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.recent-documents-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.recent-document-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.recent-document-card h3 a {
+  color: #333;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.recent-document-card h3 a:hover {
+  color: #1890ff;
+}
+
+.document-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.document-source {
+  background-color: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.view-all-link {
+  text-align: right;
+  margin-top: 1rem;
+}
+
+.view-all-link a {
+  color: #1890ff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.view-all-link a:hover {
+  color: #40a9ff;
+  text-decoration: underline;
+}
+
+.popular-searches-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.popular-search-item {
+  background-color: #f0f0f0;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.popular-search-item:hover {
+  background-color: #e0e0e0;
+  color: #1890ff;
+}
+
+@media (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .recent-documents-list {
+    grid-template-columns: 1fr;
+  }
+}

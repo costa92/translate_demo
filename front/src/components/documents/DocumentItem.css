@@ -1,0 +1,42 @@
+.document-item-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.document-item {
+  height: 100%;
+  transition: transform 0.3s;
+}
+
+.document-item:hover {
+  transform: translateY(-4px);
+}
+
+.document-title {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.document-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.document-source {
+  background-color: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.document-excerpt {
+  color: #666;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}

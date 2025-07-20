@@ -9,8 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from src.knowledge_base.core.config import Config
-from src.knowledge_base.agents.orchestrator import OrchestratorAgent
+from knowledge_base.core.config import Config
+from knowledge_base.agents.orchestrator import OrchestratorAgent
 
 from ..dependencies import get_config, get_orchestrator
 

@@ -1,0 +1,109 @@
+# 知识库系统配置文件
+# 基于config.example.yaml创建
+
+# 系统配置
+system:
+  debug: false
+  log_level: "INFO"
+  cache_enabled: true
+  cache_ttl: 3600
+  max_workers: 4
+
+# 存储配置
+storage:
+  provider: "memory"  # 使用内存存储，简单快速
+  collection_name: "knowledge_base"
+
+# 嵌入模型配置
+embedding:
+  provider: "sentence_transformers"
+  model: "all-MiniLM-L6-v2"
+  dimensions: 384
+  max_length: 512
+  batch_size: 32
+  device: "cpu"  # 使用CPU进行嵌入计算
+
+# 文本分块配置
+chunking:
+  strategy: "recursive"
+  chunk_size: 1000
+  chunk_overlap: 200
+  separators: ["\n\n", "\n", " ", ""]
+  language: "auto"
+  respect_sentence_boundary: true
+  min_chunk_size: 100
+  max_chunk_size: 2000
+
+# 检索配置
+retrieval:
+  strategy: "hybrid"  # 使用混合检索策略
+  top_k: 5
+  min_score: 0.0
+  semantic_weight: 0.7
+  keyword_weight: 0.3
+  enable_reranking: false
+  max_context_length: 4000
+
+# 生成配置
+generation:
+  provider: "simple"  # 使用简单生成器，不需要外部API
+  
+  # 生成参数
+  temperature: 0.1
+  max_tokens: 1000
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+  
+  # 提示配置
+  include_sources: true
+  language: "auto"
+  
+  # 质量控制
+  filter_content: true
+  validate_answers: true
+  quality_threshold: 0.5
+
+# Agent 配置
+agents:
+  orchestrator_enabled: true
+  data_collection_enabled: true
+  knowledge_processing_enabled: true
+  knowledge_storage_enabled: true
+  knowledge_retrieval_enabled: true
+  knowledge_maintenance_enabled: true
+  rag_enabled: true
+
+# API 配置
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  
+  # CORS 配置
+  cors_origins: ["*"]
+  cors_allow_credentials: true
+  cors_allow_methods: ["*"]
+  cors_allow_headers: ["*"]
+  
+  # 认证配置
+  auth_enabled: false
+  auth_provider: "api_key"
+  api_key_header: "X-API-Key"
+  
+  # 限流配置
+  rate_limit_enabled: false
+  rate_limit_requests: 100
+  rate_limit_period: 60
+  
+  # 文档配置
+  docs_enabled: true
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+# 监控配置
+monitoring:
+  enabled: true
+  metrics_enabled: true
+  health_check_enabled: true
+  performance_tracking: true

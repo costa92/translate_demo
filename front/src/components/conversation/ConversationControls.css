@@ -1,0 +1,15 @@
+.conversation-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .conversation-controls {
+    flex-direction: column;
+  }
+  
+  .conversation-controls button {
+    width: 100%;
+  }
+}

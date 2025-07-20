@@ -15,9 +15,9 @@ import urllib.request
 import mimetypes
 import json
 
-from src.knowledge_base.core.config import Config
-from src.knowledge_base.core.exceptions import AgentError
-from src.knowledge_base.core.types import Document, DocumentType
+from knowledge_base.core.config import Config
+from knowledge_base.core.exceptions import AgentError
+from knowledge_base.core.types import Document, DocumentType
 
 from .base import BaseAgent
 from .message import AgentMessage

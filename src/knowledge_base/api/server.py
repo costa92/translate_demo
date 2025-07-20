@@ -14,9 +14,9 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
-from src.knowledge_base.core.logging_config import configure_logging
-from src.knowledge_base.core.config import Config
-from src.knowledge_base.core.exceptions import KnowledgeBaseError
+from knowledge_base.core.logging_config import configure_logging
+from knowledge_base.core.config import Config
+from knowledge_base.core.exceptions import KnowledgeBaseError
 
 # Import dependencies
 from .dependencies import (
@@ -154,21 +154,37 @@ def create_app(config: Config) -> FastAPI:
     # Dependencies are already initialized
     
     # Import routes after dependencies are initialized
-    from .routes.knowledge import router as knowledge_router
-    from .routes.query import router as query_router
-    from .routes.admin import router as admin_router
-    from .routes.users import router as users_router
-    from .routes.monitoring import router as monitoring_router
+    try:
+        from .routes.simple_api import router as simple_api_router
+        # Only import these if they exist and are needed
+        from .routes.knowledge import router as knowledge_router
+        from .routes.query import router as query_router
+        from .routes.admin import router as admin_router
+        from .routes.users import router as users_router
+        from .routes.monitoring import router as monitoring_router
+    except ImportError as e:
+        logger.warning(f"Failed to import some routes: {e}")
+        # Ensure simple_api_router is defined
+        from .routes.simple_api import router as simple_api_router
+    from .routes.documents import router as documents_router
     
     # Configure logging
     configure_logging(config)
     
     # Include routers
-    app.include_router(knowledge_router)
-    app.include_router(query_router)
-    app.include_router(admin_router)
-    app.include_router(users_router)
-    app.include_router(monitoring_router)
+    # Always include the simple API router
+    app.include_router(simple_api_router)
+    
+    # Try to include other routers if they exist
+    try:
+        app.include_router(knowledge_router)
+        app.include_router(query_router)
+        app.include_router(admin_router)
+        app.include_router(users_router)
+        app.include_router(monitoring_router)
+    except NameError as e:
+        logger.warning(f"Some routers could not be included: {e}")
+    app.include_router(documents_router)
     
     # Mount static documentation files
     if config.api.docs_enabled:

@@ -1,131 +1,107 @@
-# Unified Knowledge Base System
+# 知识库 REST API 服务
 
-A comprehensive knowledge management system that combines document storage, processing, retrieval, and generation capabilities in a cohesive platform. The system integrates a layered architecture with a multi-agent system to provide powerful knowledge management capabilities.
+这是一个基于 FastAPI 的知识库 REST API 服务，支持文档管理、智能搜索和 LLM 集成。
 
-## Features
+## 功能特点
 
-- **Multiple Storage Backends**: Support for in-memory, Notion, vector databases, and cloud storage
-- **Flexible Document Processing**: Multiple chunking strategies and metadata extraction
-- **Advanced Retrieval**: Semantic, keyword, and hybrid search with reranking
-- **High-Quality Generation**: Support for multiple LLM providers with streaming responses
-- **Multi-Agent Architecture**: Specialized agents for different aspects of knowledge management
-- **Comprehensive API**: RESTful and WebSocket APIs for integration
+- 📄 文档管理：添加、更新、删除、查询文档
+- 🔍 智能搜索：基于语义和关键词的混合搜索
+- 🤖 LLM 集成：支持多种 LLM 提供商
+- 📊 批量操作：支持批量添加和删除文档
+- 🔄 实时 API：支持实时查询
 
-## Documentation
+## 快速开始
 
-### User Documentation
-
-- [User Guide](docs/user_guide.md): Comprehensive guide to using the system
-- [Quick Start Tutorial](docs/quick_start_tutorial.md): Step-by-step guide to getting started
-- [Configuration Guide](docs/configuration_guide.md): Detailed information on configuration options
-- [Best Practices Guide](docs/best_practices_guide.md): Recommendations for effective use
-- [Troubleshooting Guide](docs/troubleshooting_guide.md): Solutions to common issues
-
-### Technical Documentation
-
-- [Architecture](docs/architecture.md): System architecture and design decisions
-- [API Reference](docs/api_reference.md): Detailed API documentation
-- [Developer Guide](docs/developer_guide.md): Guide for developers extending the system
-
-## Installation
+### 安装依赖
 
 ```bash
-pip install unified-knowledge-base
+pip install -r requirements.txt
 ```
 
-Or install from source:
+### 配置
+
+复制 `config.example.yaml` 为 `config.yaml` 并根据需要修改配置。
+
+### 启动服务
 
 ```bash
-git clone https://github.com/yourusername/unified-knowledge-base.git
-cd unified-knowledge-base
-pip install -e .
+python run_api.py
 ```
 
-## Quick Example
+默认情况下，API 服务将在 `http://localhost:8000` 上运行。
 
-```python
-from src.knowledge_base import KnowledgeBase
-from src.knowledge_base.core.config import Config
+### 命令行参数
 
-# Initialize the knowledge base
-config = Config()
-kb = KnowledgeBase(config)
+- `--host`: 指定主机地址，默认为 0.0.0.0
+- `--port`: 指定端口，默认为 8000
+- `--debug`: 启用调试模式
+- `--config`: 指定配置文件路径
+- `--log-level`: 设置日志级别
+- `--simple`: 使用简单模式（仅基础功能）
+- `--reload`: 启用自动重载（开发模式）
 
-# Add a document
-result = kb.add_document(
-    content="This is a sample document for the knowledge base.",
-    metadata={"title": "Sample Document", "source": "example"}
-)
-print(f"Added document with ID: {result.document_id}")
+## API 端点
 
-# Query the knowledge base
-result = kb.query("What is in the sample document?")
-print(f"Answer: {result.answer}")
-print(f"Sources: {result.chunks}")
-```
+### 文档管理
 
-## API Server
+- `POST /api/v1/documents`: 添加文档
+- `GET /api/v1/documents`: 列出文档
+- `GET /api/v1/documents/{document_id}`: 获取文档
+- `DELETE /api/v1/documents/{document_id}`: 删除文档
+- `POST /api/v1/documents/batch`: 批量添加文档
 
-Start the API server:
+### 查询
+
+- `POST /api/v1/query`: 查询知识库
+- `POST /api/v1/query/advanced`: 高级查询
+
+### 文件上传
+
+- `POST /api/v1/upload`: 上传文件
+
+### 统计和管理
+
+- `GET /api/v1/stats`: 获取统计信息
+- `POST /api/v1/clear`: 清空知识库
+
+## LLM 集成
+
+本服务支持多种 LLM 提供商，包括：
+
+- OpenAI
+- DeepSeek
+- SiliconFlow
+- 本地模型
+
+要使用 LLM 功能，请在配置文件中设置相应的 API 密钥和参数。
+
+## 示例请求
+
+### 添加文档
 
 ```bash
-python -m src.knowledge_base.api.server
+curl -X POST "http://localhost:8000/api/v1/documents" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "这是一个测试文档",
+    "title": "测试文档",
+    "type": "text",
+    "tags": ["测试", "示例"]
+  }'
 ```
 
-Access the API documentation at http://localhost:8000/docs
-
-## Docker Deployment
-
-The system can be easily deployed using Docker:
-
-### Using docker-compose
+### 查询知识库
 
 ```bash
-# Build and start the containers
-docker-compose up -d
-
-# Stop the containers
-docker-compose down
+curl -X POST "http://localhost:8000/api/v1/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "测试文档",
+    "top_k": 5,
+    "use_llm": true
+  }'
 ```
 
-### Using the convenience script
+## 文档
 
-```bash
-# Build and start the containers
-./scripts/docker_deployment.sh
-
-# Stop the containers
-docker stop knowledge-base
-```
-
-The API will be available at http://localhost:8000 with documentation at http://localhost:8000/docs
-
-## Project Structure
-
-```
-src/knowledge_base/
-├── core/               # Core components and interfaces
-├── storage/            # Storage backends
-├── processing/         # Document processing
-├── retrieval/          # Search and retrieval
-├── generation/         # Response generation
-├── agents/             # Multi-agent system
-└── api/                # API server
-```
-
-## Examples
-
-Check out the `examples/` directory for more usage examples:
-
-- `examples/quick_start.py`: Basic usage of the knowledge base
-- `examples/api_server.py`: Starting the API server with custom configuration
-- `examples/multi_agent_system.py`: Using the multi-agent system
-- `examples/docker_deployment.sh`: Deploying with Docker
-
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+API 文档可在 `http://localhost:8000/docs` 或 `http://localhost:8000/redoc` 查看。

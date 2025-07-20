@@ -59,4 +59,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # Set the entrypoint
-ENTRYPOINT ["python", "-m", "src.knowledge_base.api.server"]
+ENTRYPOINT ["python", "run_api.py"]

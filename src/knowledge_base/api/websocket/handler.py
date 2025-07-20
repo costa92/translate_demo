@@ -11,9 +11,9 @@ from typing import Dict, Set, Any, Optional, Callable, Awaitable, List
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from src.knowledge_base.core.config import Config
-from src.knowledge_base.agents.orchestrator import OrchestratorAgent
-from src.knowledge_base.agents.message import AgentMessage
+from knowledge_base.core.config import Config
+from knowledge_base.agents.orchestrator import OrchestratorAgent
+from knowledge_base.agents.message import AgentMessage
 
 logger = logging.getLogger(__name__)
 
