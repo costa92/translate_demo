@@ -1,0 +1,26 @@
+[
+  {
+    "query": "天空是什么颜色？",
+    "answer": "根据知识库中的信息，天空在白天是蓝色的。",
+    "sources": [
+      "以下是一些基本事实：\n    \n    1. 天空在白天是蓝色的\n    2. 草在春天是绿色的\n    3. 水是无色透明的\n    4. 太阳从东方升起，从西方落下"
+    ]
+  },
+  {
+    "query": "如何使用NPX安装Gemini CLI？",
+    "answer": "根据技术文档，您可以使用以下命令通过NPX安装Gemini CLI：\n\n```bash\nnpx @gemini/cli init my-project\n```\n\n如果遇到权限问题，可以尝试使用sudo。",
+    "sources": [
+      "## NPX 使用指南\n    \n    NPX 是一个用于执行 npm 包的工具，无需全局安装。\n    \n    ### 安装方法\n    \n    使用 NPX 安装 Gemini CLI:\n    \n    ```bash\n    npx @gemini/cli init my-project\n    ```\n    \n    ### 常见问题\n    \n    如果遇到权限问题，可以尝试使用 sudo:\n    \n    ```bash\n    sudo npx @gemini/cli init my-project\n    ```"
+    ]
+  },
+  {
+    "query": "什么是自然语言处理？",
+    "answer": "根据人工智能基础文档，自然语言处理(NLP)是人工智能的一个分支，专注于计算机与人类语言之间的交互。",
+    "sources": [
+      "## 机器学习\n    \n    机器学习是人工智能的一个子领域，它使用统计技术让计算机系统使用数据\"学习\"，而无需明确编程。\n    \n    ## 深度学习\n    \n    深度学习是机器学习的一个子领域，它使用多层神经网络来模拟人脑的工作方式。\n    \n    ## 自然语言处理\n    \n    自然语言处理(NLP)是人工智能的一个分支，专注于计算机与人类语言之间的交互。"
+    ],
+    "filter": {
+      "source": "ai.txt"
+    }
+  }
+]

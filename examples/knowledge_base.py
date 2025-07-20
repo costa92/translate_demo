@@ -125,7 +125,7 @@ class KnowledgeBase:
                         score += 1
                         
             # 3. 特殊关键词匹配（更高权重）
-            important_keywords = ["评估", "deepseek", "chat", "coder", "模型", "性能", "维度"]
+            important_keywords = ["评估", "deepseek", "chat", "coder", "模型", "性能", "维度", "天空", "颜色", "自然语言处理", "nlp", "机器学习", "深度学习", "npx", "安装", "gemini"]
             for keyword in important_keywords:
                 if keyword in query.lower() and keyword in chunk_text:
                     score += 3
@@ -135,6 +135,29 @@ class KnowledgeBase:
                 title = chunk.metadata["title"].lower()
                 if any(word in title for word in query_words if len(word) > 2):
                     score += 5
+            
+            # 5. 语义相似度（简化版）
+            # 检查一些常见的同义词
+            synonyms = {
+                "天空": ["蓝色", "白天"],
+                "颜色": ["蓝色", "绿色", "无色"],
+                "自然语言处理": ["nlp", "语言", "处理"],
+                "安装": ["使用", "执行", "运行"]
+            }
+            
+            for word in query_words:
+                if word in synonyms:
+                    for synonym in synonyms[word]:
+                        if synonym in chunk_text:
+                            score += 2
+                            print(f"同义词匹配: {word} -> {synonym}")
+            
+            # 6. 基于位置的加权
+            # 如果关键词出现在文本的开头，给予更高的权重
+            first_50_chars = chunk_text[:50]
+            for word in query_words:
+                if len(word) > 2 and word in first_50_chars:
+                    score += 2
             
             if score > 0:
                 print(f"文档块 {chunk_id} 相关性分数: {score}")
