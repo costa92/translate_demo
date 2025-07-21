@@ -41,7 +41,7 @@ def get_llm_ollama() -> LLMBase:
   from translate_demo.config import settings
   from llm_core.config import settings_instance
   settings_instance.update(settings.as_dict())
-  return LLMFactory.create(provider="ollama", model="qwen3:8b", temperature=0)
+  return LLMFactory.create(provider="ollama", model="gemma3:12b", temperature=0)
 
 def get_llm_deepseek() -> LLMBase:
   from translate_demo.config import settings
@@ -59,9 +59,9 @@ async def async_run():
 
   # Try different providers
   providers = [
-    # ("Ollama (local LLM)", get_llm_ollama),
+    ("Ollama (local LLM)", get_llm_ollama),
     # ("DeepSeek", get_llm_deepseek),
-    ("OpenAI", get_llm_openai),
+    # ("OpenAI", get_llm_openai),
   ]
 
   translation = None

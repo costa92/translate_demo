@@ -72,6 +72,7 @@ testpaths = "tests"
 translate = "translate_demo.cmd:run"
 translate_demo = "translate_demo.cmdline:main"
 translate_api = "translate_demo.api:main"
+kb_api="run:main"
 
 [tool.pylint.design]
 max-line-length = 120

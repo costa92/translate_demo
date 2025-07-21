@@ -49,7 +49,7 @@ run: check-poetry
 .PHONY: run-api
 run-api: check-poetry
 	@echo "Starting the API server..."
-	@poetry run python src/knowledge_base_api.py
+	@poetry run kb_api
 
 # Clean temporary files and caches
 .PHONY: clean
